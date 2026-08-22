@@ -23,12 +23,26 @@ import { dayKey, daysInMonth, formatMonthYear, isSameMonth } from '../utils/date
  * appears with an empty events list (see ScheduleDayRow's "No events"
  * state); the row list is the full calendar, not a sparse index of only
  * the busy days.
+ *
+ * `months` is deduplicated by calendar identity (year + month) before
+ * building rows. Nothing upstream is *supposed* to hand this hook the
+ * same month twice — but this is the one function that actually generates
+ * each row's key, so it's the right place to guarantee that invariant
+ * directly rather than trust every caller to uphold it. A repeat here
+ * would otherwise surface as two rows sharing a key (e.g. two "day 15"
+ * rows), which React reports as a duplicate-key warning and can render
+ * incorrectly.
  */
 export function useScheduleRows(months: Date[], addedEvents: CalendarEvent[]): ScheduleRow[] {
   return useMemo(() => {
     const rows: ScheduleRow[] = [];
+    const seenMonths = new Set<string>();
 
     for (const month of months) {
+      const monthKey = `${month.getFullYear()}-${month.getMonth()}`;
+      if (seenMonths.has(monthKey)) continue;
+      seenMonths.add(monthKey);
+
       const monthAddedEvents = addedEvents.filter((event) => isSameMonth(event.date, month));
       const monthEvents = [...generateMockEvents(month), ...monthAddedEvents];
 

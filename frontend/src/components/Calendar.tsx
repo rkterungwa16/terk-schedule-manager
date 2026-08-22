@@ -44,14 +44,6 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   const [displayMode, setDisplayMode] = useState<CalendarDisplayMode>('month');
   const [theme, toggleTheme] = useTheme();
 
-  // What Schedule mode's header should show — driven by scroll position
-  // (see handleScheduleMonthChange) rather than by `state.current`, which
-  // stays reserved for Month view's Prev/Next navigation. Keeping these
-  // separate means scrolling the schedule can't desync Month view's grid,
-  // and Prev/Next (which only render in Month mode — see CalendarHeader
-  // below) can't desync the schedule.
-  const [scheduleVisibleMonth, setScheduleVisibleMonth] = useState(state.current);
-
   const eventsByDay = useEventsByDay(events);
 
   const handlePrev = useCallback(() => dispatch({ type: 'PREV_MONTH' }), []);
@@ -64,7 +56,15 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
 
   const handleOpenAddEvent = useCallback(() => setIsAddingEvent(true), []);
   const handleCloseAddEvent = useCallback(() => setIsAddingEvent(false), []);
-  const handleScheduleMonthChange = useCallback((month: Date) => setScheduleVisibleMonth(month), []);
+  // Scroll position in Schedule view drives `state.current` directly (via
+  // the reducer's SET_MONTH), rather than a separate piece of state — so
+  // switching back to Month view shows exactly the month last scrolled to,
+  // and the header (which reads `state.current` regardless of mode) never
+  // has two different ideas of "the current month" to reconcile.
+  const handleScheduleMonthChange = useCallback(
+    (month: Date) => dispatch({ type: 'SET_MONTH', payload: { month } }),
+    []
+  );
 
   // Takes the already-validated `CalendarEventInput` (see validateEvent.ts)
   // and turns it into a full `CalendarEvent` by filling in the two derived
@@ -115,7 +115,7 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   return (
     <div id="calendar">
       <CalendarHeader
-        monthAnchor={displayMode === 'month' ? state.current : scheduleVisibleMonth}
+        monthAnchor={state.current}
         onPrev={displayMode === 'month' ? handlePrev : undefined}
         onNext={displayMode === 'month' ? handleNext : undefined}
       />

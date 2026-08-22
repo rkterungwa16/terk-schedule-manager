@@ -120,7 +120,8 @@ export type CalendarAction =
   | { type: 'PREV_MONTH' }
   | { type: 'SELECT_DAY'; payload: { date: Date } }
   | { type: 'CLOSE_DETAILS' }
-  | { type: 'TRANSITION_END' };
+  | { type: 'TRANSITION_END' }
+  | { type: 'SET_MONTH'; payload: { month: Date } };
 
 export interface CalendarReducerState {
   /** First-of-month anchor for the month currently on screen. */

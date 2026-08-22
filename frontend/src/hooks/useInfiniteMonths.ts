@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { LoadDirection } from '../types/calendar.types';
 import { addMonths, monthsBetween } from '../utils/dateUtils';
 
@@ -32,6 +32,22 @@ interface LoadedRange {
 }
 
 export function useInfiniteMonths(anchorMonth: Date) {
+  // Captured once, on mount — `months` below is offsets from THIS fixed
+  // point, never re-anchored to whatever `anchorMonth` becomes on a later
+  // render. That distinction matters now that the calendar feeds scroll
+  // position back into `state.current` (see Calendar's SET_MONTH): every
+  // scroll-driven update would otherwise change `anchorMonth`, which would
+  // re-center the entire loaded window around wherever the user just
+  // scrolled to, which shifts what's visible at the top, which reports a
+  // *different* month, which re-centers again — an unbounded feedback
+  // loop, not a one-time reaction. `useRef`'s initial value is only ever
+  // used on the first render, which is exactly the "seed the initial
+  // scroll position once" behavior this hook is documented to have; a
+  // fresh anchor is picked up correctly on the next real mount (Schedule
+  // view unmounts and remounts each time displayMode toggles away and
+  // back), just not reactively while already mounted.
+  const epochRef = useRef(anchorMonth);
+
   const [range, setRange] = useState<LoadedRange>({
     start: -INITIAL_MONTHS_PAST,
     end: INITIAL_MONTHS_FUTURE,
@@ -40,10 +56,10 @@ export function useInfiniteMonths(anchorMonth: Date) {
   const months = useMemo(() => {
     const result: Date[] = [];
     for (let offset = range.start; offset <= range.end; offset++) {
-      result.push(addMonths(anchorMonth, offset));
+      result.push(addMonths(epochRef.current, offset));
     }
     return result;
-  }, [anchorMonth, range]);
+  }, [range]);
 
   /**
    * Extends the window in the given direction, then trims the opposite
@@ -76,16 +92,13 @@ export function useInfiniteMonths(anchorMonth: Date) {
    * a reasonable exception to a limit that otherwise exists to stop
    * *passive* scrolling from accumulating unbounded months.
    */
-  const ensureMonthLoaded = useCallback(
-    (target: Date) => {
-      const offset = monthsBetween(anchorMonth, target);
-      setRange((prev) => ({
-        start: Math.min(prev.start, offset),
-        end: Math.max(prev.end, offset),
-      }));
-    },
-    [anchorMonth]
-  );
+  const ensureMonthLoaded = useCallback((target: Date) => {
+    const offset = monthsBetween(epochRef.current, target);
+    setRange((prev) => ({
+      start: Math.min(prev.start, offset),
+      end: Math.max(prev.end, offset),
+    }));
+  }, []);
 
   return { months, loadPast, loadFuture, ensureMonthLoaded };
 }

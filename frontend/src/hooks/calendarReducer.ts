@@ -65,6 +65,26 @@ export function calendarReducer(
     case 'CLOSE_DETAILS':
       return { ...state, selectedDate: null };
 
+    case 'SET_MONTH': {
+      // A silent jump — used when Schedule view's scroll position tells us
+      // the visible month changed, so Month view shows the same month the
+      // instant the user switches back to it. Deliberately distinct from
+      // NEXT_MONTH/PREV_MONTH: those trigger the leaving/entering slide
+      // animation, which makes sense for an explicit arrow click but not
+      // for "the background view quietly stayed in sync while scrolling
+      // somewhere else" — Month view isn't even mounted to animate while
+      // Schedule view is open. Clears `selectedDate` too: a day selected
+      // in whatever month was previously current has no meaning once
+      // browsing has moved to a different month entirely.
+      if (state.current.getTime() === action.payload.month.getTime()) return state;
+      return {
+        ...state,
+        current: action.payload.month,
+        selectedDate: null,
+        view: { status: 'idle' },
+      };
+    }
+
     default:
       // Exhaustiveness check: if CalendarAction ever gains a new variant
       // without a corresponding `case` above, `action` is not assignable
