@@ -542,6 +542,14 @@ body {
   font-size: 14px;
 }
 
+.schedule-event-empty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
 /* ----------------------------------------------------------------------
    Legend
    ---------------------------------------------------------------------- */

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { CalendarEvent, ScheduleRow } from '../types/calendar.types';
 import { generateMockEvents } from '../data/mockEvents';
-import { dayKey, formatMonthYear, isSameMonth } from '../utils/dateUtils';
+import { dayKey, daysInMonth, formatMonthYear, isSameMonth } from '../utils/dateUtils';
 
 /**
  * Builds the flat row list for however many months are currently loaded.
@@ -17,6 +17,12 @@ import { dayKey, formatMonthYear, isSameMonth } from '../utils/dateUtils';
  * merged in per month by filtering on `isSameMonth`, so an event added
  * for any date — past, present, or future — appears correctly the moment
  * its month scrolls into the loaded window.
+ *
+ * Every day of the month gets a row — day 1 through `daysInMonth(month)` —
+ * not just the days that happen to have an event. A day with none still
+ * appears with an empty events list (see ScheduleDayRow's "No events"
+ * state); the row list is the full calendar, not a sparse index of only
+ * the busy days.
  */
 export function useScheduleRows(months: Date[], addedEvents: CalendarEvent[]): ScheduleRow[] {
   return useMemo(() => {
@@ -26,32 +32,28 @@ export function useScheduleRows(months: Date[], addedEvents: CalendarEvent[]): S
       const monthAddedEvents = addedEvents.filter((event) => isSameMonth(event.date, month));
       const monthEvents = [...generateMockEvents(month), ...monthAddedEvents];
 
-      const dayGroups = new Map<number, { date: Date; events: CalendarEvent[] }>();
+      const eventsByDay = new Map<number, CalendarEvent[]>();
       for (const event of monthEvents) {
-        const key = new Date(
-          event.date.getFullYear(),
-          event.date.getMonth(),
-          event.date.getDate()
-        ).getTime();
-        const existing = dayGroups.get(key);
-        if (existing) {
-          existing.events.push(event);
-        } else {
-          dayGroups.set(key, { date: new Date(key), events: [event] });
-        }
+        const day = event.date.getDate();
+        const existing = eventsByDay.get(day);
+        if (existing) existing.push(event);
+        else eventsByDay.set(day, [event]);
       }
 
-      const sortedDays = Array.from(dayGroups.values()).sort(
-        (a, b) => a.date.getTime() - b.date.getTime()
-      );
+      rows.push({
+        kind: 'month-divider',
+        key: `divider-${dayKey(month)}`,
+        label: formatMonthYear(month),
+      });
 
-      // A month with zero events still gets a divider — otherwise scrolling
-      // through a quiet month would look identical to a loading glitch,
-      // with no indication the app registered that month at all.
-      rows.push({ kind: 'month-divider', key: `divider-${dayKey(month)}`, label: formatMonthYear(month) });
-
-      for (const group of sortedDays) {
-        rows.push({ kind: 'day', key: dayKey(group.date), group });
+      const totalDays = daysInMonth(month);
+      for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(month.getFullYear(), month.getMonth(), day);
+        rows.push({
+          kind: 'day',
+          key: dayKey(date),
+          group: { date, events: eventsByDay.get(day) ?? [] },
+        });
       }
     }
 

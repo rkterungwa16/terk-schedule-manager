@@ -16,6 +16,11 @@ export function endOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0);
 }
 
+/** Number of days in the given date's month (28-31). */
+export function daysInMonth(date: Date): number {
+  return endOfMonth(date).getDate();
+}
+
 export function addMonths(date: Date, amount: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }

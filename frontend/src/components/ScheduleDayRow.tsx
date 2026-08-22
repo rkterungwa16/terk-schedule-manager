@@ -16,8 +16,8 @@ const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'short' });
  * means adding a new event to *one* day only re-renders that day's row
  * (plus whatever new row it creates), not every row already in the list.
  * This only pays off because `group` is a stable reference for every day
- * whose events didn't change — guaranteed by `useScheduleDays`' `useMemo`,
- * which only rebuilds groups when `events` or `monthAnchor` actually change.
+ * whose events didn't change — guaranteed by `useScheduleRows`' `useMemo`,
+ * which only rebuilds groups when `months` or `addedEvents` actually change.
  */
 function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
   const isToday = isSameDay(group.date, today);
@@ -30,12 +30,16 @@ function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
         <div className="schedule-day-month">{MONTH_FORMAT.format(group.date)}</div>
       </div>
       <ul className="schedule-day-events">
-        {group.events.map((event) => (
-          <li key={event.id} className="schedule-event">
-            <span className={`event-category ${event.color}`} />
-            <span>{event.eventName}</span>
-          </li>
-        ))}
+        {group.events.length === 0 ? (
+          <li className="schedule-event schedule-event-empty">No events</li>
+        ) : (
+          group.events.map((event) => (
+            <li key={event.id} className="schedule-event">
+              <span className={`event-category ${event.color}`} />
+              <span>{event.eventName}</span>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );
