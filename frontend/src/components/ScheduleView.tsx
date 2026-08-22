@@ -14,6 +14,11 @@ interface ScheduleViewProps {
    *  month Month view is currently showing, so switching views feels
    *  continuous rather than resetting somewhere arbitrary. */
   initialMonth: Date;
+  /** Called whenever the month at the top of the visible viewport changes
+   *  — lets the header track what's actually on screen as the user
+   *  scrolls, the same way a physical desk calendar's visible page tells
+   *  you what month you're on. */
+  onVisibleMonthChange?: (month: Date) => void;
 }
 
 const TODAY = new Date();
@@ -26,7 +31,7 @@ const TODAY = new Date();
  *  scaled down for our shorter rows. */
 const SENTINEL_MARGIN_PX = 800;
 
-export function ScheduleView({ events, initialMonth }: ScheduleViewProps) {
+export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: ScheduleViewProps) {
   const { months, loadPast, loadFuture, ensureMonthLoaded } = useInfiniteMonths(initialMonth);
   const rows = useScheduleRows(months, events);
   const { offsets, totalHeight, range, recomputeRange, measureRow, findIndexForOffset } =
@@ -51,6 +56,25 @@ export function ScheduleView({ events, initialMonth }: ScheduleViewProps) {
   // however many rows were just prepended in front of it.
   const pastAnchorRef = useRef<{ key: string; withinRowOffset: number } | null>(null);
   const pendingTodayScrollRef = useRef(false);
+
+  // Tracks the last month reported to the parent, keyed as "year-month" so
+  // a re-render that doesn't actually change months (most of them — this
+  // fires on every scroll tick) doesn't call `onVisibleMonthChange` again
+  // with the same value.
+  const lastReportedMonthKeyRef = useRef<string | null>(null);
+
+  const reportVisibleMonth = useCallback(
+    (scrollTop: number) => {
+      if (!onVisibleMonthChange || rows.length === 0) return;
+      const row = rows[findIndexForOffset(scrollTop)];
+      if (!row) return;
+      const key = `${row.month.getFullYear()}-${row.month.getMonth()}`;
+      if (key === lastReportedMonthKeyRef.current) return;
+      lastReportedMonthKeyRef.current = key;
+      onVisibleMonthChange(row.month);
+    },
+    [rows, findIndexForOffset, onVisibleMonthChange]
+  );
 
   const handleIntersectTop = useCallback(() => {
     if (isLoadingPastRef.current) return;
@@ -137,25 +161,28 @@ export function ScheduleView({ events, initialMonth }: ScheduleViewProps) {
 
     if (el) {
       recomputeRange(el.scrollTop, el.clientHeight);
+      reportVisibleMonth(el.scrollTop);
     }
-    // Deliberately not depending on `recomputeRange`'s own inputs beyond
-    // `rows`/`offsets` — those two changing is exactly "the data this
-    // effect needs to react to changed."
+    // Deliberately not depending on `recomputeRange`/`reportVisibleMonth`'s
+    // own inputs beyond `rows`/`offsets` — those two changing is exactly
+    // "the data this effect needs to react to changed."
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, offsets]);
 
   // The scroll-driven counterpart to the effect above: recomputes which
-  // rows should be rendered as the user actually scrolls, throttled to at
-  // most once per animation frame via `raf1` — identical in spirit to the
-  // reference's `_scheduleRecalc`.
+  // rows should be rendered, and which month the header should reflect, as
+  // the user actually scrolls — throttled to at most once per animation
+  // frame via `raf1`, identical in spirit to the reference's
+  // `_scheduleRecalc`.
   const handleScroll = useMemo(
     () =>
       raf1(() => {
         const el = scrollElementRef.current;
         if (!el) return;
         recomputeRange(el.scrollTop, el.clientHeight);
+        reportVisibleMonth(el.scrollTop);
       }),
-    [recomputeRange]
+    [recomputeRange, reportVisibleMonth]
   );
 
   useEffect(() => {

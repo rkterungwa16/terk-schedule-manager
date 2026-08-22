@@ -44,6 +44,7 @@ export function useScheduleRows(months: Date[], addedEvents: CalendarEvent[]): S
         kind: 'month-divider',
         key: `divider-${dayKey(month)}`,
         label: formatMonthYear(month),
+        month,
       });
 
       const totalDays = daysInMonth(month);
@@ -53,6 +54,7 @@ export function useScheduleRows(months: Date[], addedEvents: CalendarEvent[]): S
           kind: 'day',
           key: dayKey(date),
           group: { date, events: eventsByDay.get(day) ?? [] },
+          month,
         });
       }
     }

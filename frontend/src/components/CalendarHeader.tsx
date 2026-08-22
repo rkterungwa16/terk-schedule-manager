@@ -3,16 +3,20 @@ import { formatMonthYear } from '../utils/dateUtils';
 
 interface CalendarHeaderProps {
   monthAnchor: Date;
-  onPrev: () => void;
-  onNext: () => void;
+  /** Omit both to hide the nav arrows entirely — used in Schedule mode,
+   *  where the month shown is driven by scroll position rather than a
+   *  Prev/Next control, so the arrows wouldn't have anything meaningful
+   *  to do. */
+  onPrev?: () => void;
+  onNext?: () => void;
 }
 
 function CalendarHeaderComponent({ monthAnchor, onPrev, onNext }: CalendarHeaderProps) {
   return (
     <div className="header">
-      <div className="left" onClick={onPrev} role="button" aria-label="Previous month" />
+      {onPrev && <div className="left" onClick={onPrev} role="button" aria-label="Previous month" />}
       <h1>{formatMonthYear(monthAnchor)}</h1>
-      <div className="right" onClick={onNext} role="button" aria-label="Next month" />
+      {onNext && <div className="right" onClick={onNext} role="button" aria-label="Next month" />}
     </div>
   );
 }

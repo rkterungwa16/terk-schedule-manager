@@ -265,8 +265,8 @@ export interface ScheduleDayGroup {
 // ----------------------------------------------------------------------------
 
 export type ScheduleRow =
-  | { kind: 'month-divider'; key: string; label: string }
-  | { kind: 'day'; key: string; group: ScheduleDayGroup };
+  | { kind: 'month-divider'; key: string; label: string; month: Date }
+  | { kind: 'day'; key: string; group: ScheduleDayGroup; month: Date };
 
 /** Which edge of the loaded window a scroll-triggered load should extend. */
 export type LoadDirection = 'past' | 'future';
