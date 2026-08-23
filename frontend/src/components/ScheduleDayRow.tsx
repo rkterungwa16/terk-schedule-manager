@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import type { ScheduleDayGroup } from '../types/calendar.types';
-import { isSameDay } from '../utils/dateUtils';
+import { formatTimeLabel, isSameDay } from '../utils/dateUtils';
+import { useCategories } from '../context/CategoriesContext';
+import { getCategory } from '../data/categories';
 
 interface ScheduleDayRowProps {
   group: ScheduleDayGroup;
@@ -17,9 +19,12 @@ const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'short' });
  * (plus whatever new row it creates), not every row already in the list.
  * This only pays off because `group` is a stable reference for every day
  * whose events didn't change — guaranteed by `useScheduleRows`' `useMemo`,
- * which only rebuilds groups when `months` or `addedEvents` actually change.
+ * which only rebuilds groups when `months` or `events` actually change.
+ * Same Context caveat as `Day`: adding a category still re-renders every
+ * row regardless of `memo`, since that's a Context change, not a prop one.
  */
 function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
+  const { categories } = useCategories();
   const isToday = isSameDay(group.date, today);
 
   return (
@@ -35,7 +40,11 @@ function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
         ) : (
           group.events.map((event) => (
             <li key={event.id} className="schedule-event">
-              <span className={`event-category ${event.color}`} />
+              <span
+                className="event-category"
+                style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
+              />
+              <span className="event-time">{formatTimeLabel(event.startTime)}</span>
               <span>{event.eventName}</span>
             </li>
           ))

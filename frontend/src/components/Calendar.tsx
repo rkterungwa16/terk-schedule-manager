@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import type { CalendarEvent, CalendarEventInput, CalendarDisplayMode } from '../types/calendar.types';
-import { CATEGORY_COLOR_MAP, hasDirection } from '../types/calendar.types';
+import { hasDirection } from '../types/calendar.types';
 import { calendarReducer, createInitialState } from '../hooks/calendarReducer';
+import { addMonths, buildMonthGrid } from '../utils/dateUtils';
 import { useEventsByDay, getEventsForDay } from '../hooks/useEventsByDay';
-import { generateMockEvents } from '../data/mockEvents';
+import { MOCK_EVENTS } from '../data/mockEvents';
+import { CategoriesProvider } from '../context/CategoriesContext';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthGrid } from './MonthGrid';
 import { ScheduleView } from './ScheduleView';
@@ -26,14 +28,13 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   const [state, dispatch] = useReducer(calendarReducer, undefined, createInitialState);
 
   // Lazy initializer: this only runs once, on mount, not on every render.
-  // Passing a function to useState (instead of calling the generator
-  // directly as the argument) avoids re-generating/discarding the array on
-  // every re-render. Event state now lives here (rather than being derived
-  // from a prop) because the calendar needs to *mutate* its event list when
-  // the user adds one.
-  const [events, setEvents] = useState<CalendarEvent[]>(
-    () => eventsProp ?? generateMockEvents(state.current)
-  );
+  // Seeded from the static MOCK_EVENTS list rather than a per-month
+  // generator — recurrence means an event's visible occurrences aren't
+  // tied to any one month anymore (see data/mockEvents.ts), so there's
+  // nothing left to regenerate when the visible month changes. Event
+  // state lives here (rather than being derived from a prop) because the
+  // calendar needs to *mutate* its event list when the user adds one.
+  const [events, setEvents] = useState<CalendarEvent[]>(() => eventsProp ?? MOCK_EVENTS);
 
   const [isAddingEvent, setIsAddingEvent] = useState(false);
 
@@ -44,7 +45,13 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   const [displayMode, setDisplayMode] = useState<CalendarDisplayMode>('month');
   const [theme, toggleTheme] = useTheme();
 
-  const eventsByDay = useEventsByDay(events);
+  // Computed once here (rather than inside MonthGrid) because it's also
+  // exactly what useEventsByDay needs: "which specific days should we
+  // evaluate recurrence against" — recurrence has no way to answer "which
+  // days have events" without first being told which days to check (see
+  // useEventsByDay's performance note).
+  const monthGridDays = useMemo(() => buildMonthGrid(state.current), [state.current]);
+  const eventsByDay = useEventsByDay(events, monthGridDays);
 
   const handlePrev = useCallback(() => dispatch({ type: 'PREV_MONTH' }), []);
   const handleNext = useCallback(() => dispatch({ type: 'NEXT_MONTH' }), []);
@@ -67,17 +74,14 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   );
 
   // Takes the already-validated `CalendarEventInput` (see validateEvent.ts)
-  // and turns it into a full `CalendarEvent` by filling in the two derived
-  // fields: `id` (generated here, since this is the single place events are
-  // created) and `color` (looked up from `calendar` via CATEGORY_COLOR_MAP,
-  // the same source-of-truth map the types are derived from — so a "Work"
-  // event can never end up with a color other than orange).
+  // and fills in the one derived field: `id`, generated here since this is
+  // the single place events are created. Color is no longer derived or
+  // stored on the event at all — it's looked up from `categoryId` against
+  // the live categories list wherever an event is displayed (Day,
+  // DayDetails, ScheduleDayRow), so editing a category's color later would
+  // correctly repaint every event referencing it, past and future alike.
   const handleAddEvent = useCallback((input: CalendarEventInput) => {
-    const newEvent: CalendarEvent = {
-      ...input,
-      id: crypto.randomUUID(),
-      color: CATEGORY_COLOR_MAP[input.calendar],
-    };
+    const newEvent: CalendarEvent = { ...input, id: crypto.randomUUID() };
     // Functional update — `setEvents` never reads `events` from closure,
     // so this callback's identity doesn't need `events` in its dependency
     // array and stays stable across renders.
@@ -112,55 +116,75 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
     ? getEventsForDay(eventsByDay, state.selectedDate)
     : null;
 
+  // What Prev/Next navigation is *headed toward*, computed immediately
+  // rather than waiting for the animation to finish. `state.current` only
+  // actually updates at TRANSITION_END — a deliberate ~400ms after the
+  // click, so MonthGrid's own slide-out animation has something to show
+  // (see calendarReducer's NEXT_MONTH/PREV_MONTH cases). But that same lag
+  // means anything reading `state.current` during the 'leaving' phase —
+  // the header, and Schedule view's initial scroll position if the user
+  // switches views mid-click — would show the month being left, not the
+  // one just requested. MonthGrid itself still reads the literal
+  // `state.current` below (it needs the real transition timing to animate
+  // correctly); this anticipated value is only for the two places that
+  // just need to know "what month did the user ask for," immediately.
+  const effectiveCurrentMonth =
+    state.view.status === 'leaving'
+      ? addMonths(state.current, state.view.direction === 'next' ? 1 : -1)
+      : state.current;
+
   return (
-    <div id="calendar">
-      <CalendarHeader
-        monthAnchor={state.current}
-        onPrev={displayMode === 'month' ? handlePrev : undefined}
-        onNext={displayMode === 'month' ? handleNext : undefined}
-      />
-      <div className="toolbar">
-        <ViewToggle mode={displayMode} onChange={setDisplayMode} />
-        <ThemeToggle mode={theme} onToggle={toggleTheme} />
-      </div>
-
-      {displayMode === 'month' ? (
-        <>
-          <MonthGrid
-            monthAnchor={state.current}
-            eventsByDay={eventsByDay}
-            selectedDate={state.selectedDate}
-            onSelectDay={handleSelectDay}
-            animationClass={animationClass}
-          />
-          {selectedDayEvents && (
-            <div onClick={handleCloseDetails}>
-              <DayDetails events={selectedDayEvents} onAddEvent={handleOpenAddEvent} />
-            </div>
-          )}
-        </>
-      ) : (
-        <ScheduleView
-          events={events}
-          initialMonth={state.current}
-          onVisibleMonthChange={handleScheduleMonthChange}
+    <CategoriesProvider>
+      <div id="calendar">
+        <CalendarHeader
+          monthAnchor={effectiveCurrentMonth}
+          onPrev={displayMode === 'month' ? handlePrev : undefined}
+          onNext={displayMode === 'month' ? handleNext : undefined}
         />
-      )}
+        <div className="toolbar">
+          <ViewToggle mode={displayMode} onChange={setDisplayMode} />
+          <ThemeToggle mode={theme} onToggle={toggleTheme} />
+        </div>
 
-      <button type="button" className="add-event-trigger" onClick={handleOpenAddEvent}>
-        + Add Event
-      </button>
-      <Legend events={events} />
-
-      {isAddingEvent && (
-        <Modal onClose={handleCloseAddEvent}>
-          <AddEventForm
-            initialDate={state.selectedDate ?? state.current}
-            onSubmit={handleAddEvent}
-            onCancel={handleCloseAddEvent}
+        {displayMode === 'month' ? (
+          <>
+            <MonthGrid
+              monthAnchor={state.current}
+              days={monthGridDays}
+              eventsByDay={eventsByDay}
+              selectedDate={state.selectedDate}
+              onSelectDay={handleSelectDay}
+              animationClass={animationClass}
+            />
+            {selectedDayEvents && (
+              <div onClick={handleCloseDetails}>
+                <DayDetails events={selectedDayEvents} onAddEvent={handleOpenAddEvent} />
+              </div>
+            )}
+          </>
+        ) : (
+          <ScheduleView
+            events={events}
+            initialMonth={effectiveCurrentMonth}
+            onVisibleMonthChange={handleScheduleMonthChange}
           />
-        </Modal>
-      )}
-    </div>
+        )}
+
+        <button type="button" className="add-event-trigger" onClick={handleOpenAddEvent}>
+          + Add Event
+        </button>
+        <Legend />
+
+        {isAddingEvent && (
+          <Modal onClose={handleCloseAddEvent}>
+            <AddEventForm
+              initialDate={state.selectedDate ?? state.current}
+              onSubmit={handleAddEvent}
+              onCancel={handleCloseAddEvent}
+            />
+          </Modal>
+        )}
+      </div>
+    </CategoriesProvider>
   );
 }

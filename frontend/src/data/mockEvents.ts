@@ -1,50 +1,54 @@
-import type { CalendarCategory, CalendarEvent } from '../types/calendar.types';
-import { CATEGORY_COLOR_MAP } from '../types/calendar.types';
-
-interface RawEvent {
-  eventName: string;
-  calendar: CalendarCategory;
-  dayOfMonth: number;
-}
-
-const RAW_EVENTS: RawEvent[] = [
-  { eventName: 'Lunch Meeting w/ Mark', calendar: 'Work', dayOfMonth: 3 },
-  { eventName: 'Interview - Jr. Web Developer', calendar: 'Work', dayOfMonth: 8 },
-  { eventName: 'Demo New App to the Board', calendar: 'Work', dayOfMonth: 8 },
-  { eventName: 'Dinner w/ Marketing', calendar: 'Work', dayOfMonth: 21 },
-
-  { eventName: 'Game vs Portland', calendar: 'Sports', dayOfMonth: 5 },
-  { eventName: 'Game vs Houston', calendar: 'Sports', dayOfMonth: 12 },
-  { eventName: 'Game vs Denver', calendar: 'Sports', dayOfMonth: 19 },
-  { eventName: 'Game vs San Diego', calendar: 'Sports', dayOfMonth: 26 },
-
-  { eventName: 'School Play', calendar: 'Kids', dayOfMonth: 8 },
-  { eventName: 'Parent/Teacher Conference', calendar: 'Kids', dayOfMonth: 14 },
-  { eventName: 'Pick up from Soccer Practice', calendar: 'Kids', dayOfMonth: 14 },
-  { eventName: 'Ice Cream Night', calendar: 'Kids', dayOfMonth: 22 },
-
-  { eventName: 'Free Tamale Night', calendar: 'Other', dayOfMonth: 2 },
-  { eventName: 'Bowling Team', calendar: 'Other', dayOfMonth: 11 },
-  { eventName: 'Teach Kids to Code', calendar: 'Other', dayOfMonth: 17 },
-  { eventName: 'Startup Weekend', calendar: 'Other', dayOfMonth: 27 },
-];
+import type { CalendarEvent } from '../types/calendar.types';
 
 /**
- * Builds mock events anchored to whatever month is passed in, so the demo
- * data always has something to show regardless of which month the user
- * navigates to on first load. In a real app this function is replaced by
- * a fetch/query hook — everything downstream only depends on the
- * `CalendarEvent[]` shape, not on how it was produced.
+ * Anchored relative to whenever the app happens to load, so the demo data
+ * always feels current regardless of when that is — the same intent the
+ * old per-month generator had, just accomplished through real recurrence
+ * now instead of regenerating a copy of every event for whatever month was
+ * asked about. Each entry below is a genuine template: one true start
+ * date, one recurrence rule, and `eventOccursOnDate` (utils/recurrence.ts)
+ * decides which days it actually shows up on — including days in months
+ * that were never explicitly "generated," past or future alike.
  */
-export function generateMockEvents(monthAnchor: Date): CalendarEvent[] {
-  const year = monthAnchor.getFullYear();
-  const month = monthAnchor.getMonth();
+const TODAY = new Date();
 
-  return RAW_EVENTS.map((raw, index) => ({
-    id: `${year}-${month}-${index}`,
-    eventName: raw.eventName,
-    calendar: raw.calendar,
-    color: CATEGORY_COLOR_MAP[raw.calendar],
-    date: new Date(year, month, raw.dayOfMonth),
-  }));
+function daysFromToday(offset: number): Date {
+  return new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + offset);
 }
+
+interface MockEventSeed {
+  eventName: string;
+  categoryId: string;
+  daysOffset: number;
+  startTime: string;
+  endTime: string;
+  recurrence: CalendarEvent['recurrence'];
+}
+
+const SEEDS: MockEventSeed[] = [
+  { eventName: 'Lunch Meeting w/ Mark', categoryId: 'work', daysOffset: -2, startTime: '12:00', endTime: '13:00', recurrence: 'none' },
+  { eventName: 'Interview - Jr. Web Developer', categoryId: 'work', daysOffset: 3, startTime: '10:00', endTime: '11:00', recurrence: 'none' },
+  { eventName: 'Weekly Team Standup', categoryId: 'work', daysOffset: -30, startTime: '09:00', endTime: '09:15', recurrence: 'weekly' },
+  { eventName: 'Demo New App to the Board', categoryId: 'work', daysOffset: -15, startTime: '14:00', endTime: '15:00', recurrence: 'monthly' },
+
+  { eventName: 'Game vs Portland', categoryId: 'sports', daysOffset: 5, startTime: '19:00', endTime: '21:00', recurrence: 'none' },
+  { eventName: 'Weekly Soccer Practice', categoryId: 'sports', daysOffset: -14, startTime: '17:00', endTime: '18:30', recurrence: 'weekly' },
+
+  { eventName: 'School Play', categoryId: 'kids', daysOffset: 8, startTime: '18:00', endTime: '19:30', recurrence: 'none' },
+  { eventName: 'Parent/Teacher Conference', categoryId: 'kids', daysOffset: -20, startTime: '16:00', endTime: '16:30', recurrence: 'monthly' },
+  { eventName: 'Morning Walk', categoryId: 'kids', daysOffset: -10, startTime: '07:00', endTime: '07:30', recurrence: 'daily' },
+
+  { eventName: 'Free Tamale Night', categoryId: 'other', daysOffset: 2, startTime: '18:00', endTime: '20:00', recurrence: 'none' },
+  { eventName: 'Bowling Team', categoryId: 'other', daysOffset: -21, startTime: '19:00', endTime: '21:00', recurrence: 'weekly' },
+  { eventName: 'Company Anniversary', categoryId: 'other', daysOffset: -100, startTime: '12:00', endTime: '13:00', recurrence: 'yearly' },
+];
+
+export const MOCK_EVENTS: CalendarEvent[] = SEEDS.map((seed, index) => ({
+  id: `mock-${index}`,
+  eventName: seed.eventName,
+  categoryId: seed.categoryId,
+  date: daysFromToday(seed.daysOffset),
+  startTime: seed.startTime,
+  endTime: seed.endTime,
+  recurrence: seed.recurrence,
+}));

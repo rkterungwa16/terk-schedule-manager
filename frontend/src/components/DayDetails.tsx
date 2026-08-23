@@ -1,4 +1,7 @@
 import type { CalendarEvent } from '../types/calendar.types';
+import { useCategories } from '../context/CategoriesContext';
+import { getCategory } from '../data/categories';
+import { formatTimeLabel } from '../utils/dateUtils';
 
 interface DayDetailsProps {
   events: CalendarEvent[];
@@ -6,6 +9,8 @@ interface DayDetailsProps {
 }
 
 export function DayDetails({ events, onAddEvent }: DayDetailsProps) {
+  const { categories } = useCategories();
+
   return (
     <div className="details in">
       <div className="arrow" />
@@ -17,7 +22,11 @@ export function DayDetails({ events, onAddEvent }: DayDetailsProps) {
         )}
         {events.map((event) => (
           <div className="event" key={event.id}>
-            <div className={`event-category ${event.color}`} />
+            <div
+              className="event-category"
+              style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
+            />
+            <span className="event-time">{formatTimeLabel(event.startTime)}</span>
             <span>{event.eventName}</span>
           </div>
         ))}

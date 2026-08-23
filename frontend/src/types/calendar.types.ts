@@ -10,36 +10,27 @@
  */
 
 // ----------------------------------------------------------------------------
-// 1. A single source of truth map, with keyof + indexed access types derived
-//    from it. This avoids ever writing the string literals twice and lets
-//    TypeScript catch typos ("Wrok" instead of "Work") at compile time.
+// 1. Event categories are no longer a fixed, closed set — the user can add
+//    their own. That's a meaningful type-design fork from where this file
+//    started: a *closed* set of categories was modeled as a compile-time
+//    literal union (`keyof typeof CATEGORY_COLOR_MAP`), which let TypeScript
+//    catch a typo'd category name at build time. That approach fundamentally
+//    cannot express "the user can add a new one at runtime" — a literal
+//    union's members are fixed when the code is compiled. So categories are
+//    now ordinary *data* (an `EventCategory[]` array, held in state — see
+//    CategoriesContext), and an event references one by `categoryId: string`,
+//    validated at the point of use (form submission) against whatever
+//    categories currently exist, rather than by the type checker.
 // ----------------------------------------------------------------------------
 
-/**
- * The map itself is the single source of truth. `as const` makes every
- * property readonly and narrows the values to their literal types (e.g.
- * 'orange', not `string`), which is what makes the derived types below
- * possible.
- */
-export const CATEGORY_COLOR_MAP = {
-  Work: 'orange',
-  Sports: 'blue',
-  Kids: 'yellow',
-  Other: 'green',
-} as const;
-
-/**
- * `keyof typeof X` — indexed access on the *type* of a runtime value.
- * CalendarCategory = 'Work' | 'Sports' | 'Kids' | 'Other'
- */
-export type CalendarCategory = keyof typeof CATEGORY_COLOR_MAP;
-
-/**
- * Indexed access type: "give me the type of the value at this key".
- * Because CATEGORY_COLOR_MAP is `as const`, this resolves to the literal
- * union 'orange' | 'blue' | 'yellow' | 'green', NOT `string`.
- */
-export type EventColor = (typeof CATEGORY_COLOR_MAP)[CalendarCategory];
+export interface EventCategory {
+  id: string;
+  name: string;
+  /** A flat hex value from the app's swatch palette — see
+   *  data/categories.ts. Not a CSS class name or design token, because a
+   *  user-created category's color isn't known until they pick it. */
+  color: string;
+}
 
 // ----------------------------------------------------------------------------
 // 2. Interface vs type alias — used deliberately for different jobs.
@@ -55,28 +46,29 @@ export type EventColor = (typeof CATEGORY_COLOR_MAP)[CalendarCategory];
 export interface CalendarEvent {
   id: string;
   eventName: string;
-  calendar: CalendarCategory;
-  /** Derived from `calendar` via CATEGORY_COLOR_MAP — kept denormalized on
-   *  the object so components never need to re-derive it. */
-  color: EventColor;
+  categoryId: string;
+  /** The exact date of the first (or only, for non-repeating events)
+   *  occurrence — never a "day of the month" pattern. Which other dates
+   *  this event also appears on is *computed* from this date plus
+   *  `recurrence` (see utils/recurrence.ts), not stored. */
   date: Date;
+  /** "HH:MM", 24-hour — the native format `<input type="time">` uses, kept
+   *  as-is rather than converted to e.g. minutes-since-midnight, since
+   *  every place that reads it either displays it or feeds it straight
+   *  back into a time input. */
+  startTime: string;
+  endTime: string;
+  recurrence: RecurrenceFrequency;
 }
 
 /**
- * A narrower "input" shape for creating events, expressed with utility
- * types instead of being hand-written:
- *  - Omit<T, K>  removes properties from an existing type (no `color`,
- *    caller shouldn't set the derived field; no `id`, it's generated).
- * This means CalendarEventInput automatically stays in sync if
- * CalendarEvent ever changes shape.
+ * A narrower "input" shape for creating events, expressed with a utility
+ * type instead of being hand-written: Omit<T, K> removes `id`, which is
+ * generated at creation time, not supplied by the caller. This means
+ * CalendarEventInput automatically stays in sync if CalendarEvent ever
+ * changes shape.
  */
-export type CalendarEventInput = Omit<CalendarEvent, 'id' | 'color'>;
-
-/**
- * Pick<T, K> — the inverse of Omit. Used for the compact "legend entry"
- * shape, which only needs two of CalendarEvent's fields.
- */
-export type LegendEntry = Pick<CalendarEvent, 'calendar' | 'color'>;
+export type CalendarEventInput = Omit<CalendarEvent, 'id'>;
 
 // ----------------------------------------------------------------------------
 // 3. Discriminated unions for UI state — this is the core pattern used to
@@ -174,36 +166,16 @@ export function groupBy<T, K extends PropertyKey>(
 }
 
 // ----------------------------------------------------------------------------
-// 7. unknown / never in practice — a type guard for validating data that
-//    enters the system from an untyped boundary (JSON, an API response,
-//    localStorage, etc). `unknown` forces every field to be checked before
-//    use; `never` is used as the "this branch is unreachable" marker for
-//    exhaustiveness checking in the reducer (see calendarReducer.ts).
+// 7. `unknown` at a real untyped boundary. Category membership is no longer
+//    something a type guard can check — the set isn't closed at compile
+//    time anymore (see section 1) — so validating a category reference now
+//    needs the *current* categories list as data, not just the type
+//    checker. That check now lives in utils/validateEvent.ts, next to the
+//    rest of the add-event form's validation, rather than here.
 // ----------------------------------------------------------------------------
 
-export function isCalendarCategory(value: unknown): value is CalendarCategory {
-  return typeof value === 'string' && value in CATEGORY_COLOR_MAP;
-}
-
-export function parseCalendarEventInput(raw: unknown): CalendarEventInput | null {
-  if (typeof raw !== 'object' || raw === null) return null;
-
-  // Narrow `raw` from `unknown` to a record we can safely index.
-  const candidate = raw as Record<string, unknown>;
-
-  if (
-    typeof candidate.eventName !== 'string' ||
-    !isCalendarCategory(candidate.calendar) ||
-    !(candidate.date instanceof Date)
-  ) {
-    return null;
-  }
-
-  return {
-    eventName: candidate.eventName,
-    calendar: candidate.calendar,
-    date: candidate.date,
-  };
+export function isRecurrenceFrequency(value: unknown): value is RecurrenceFrequency {
+  return value === 'none' || value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
 }
 
 /**
@@ -245,6 +217,13 @@ export type CalendarDisplayMode = 'month' | 'schedule';
 /** Also a plain union, same reasoning as CalendarDisplayMode above —
  *  neither variant carries a payload. */
 export type ThemeMode = 'light' | 'dark';
+
+/** A fourth plain union in the same family: none of the five recurrence
+ *  modes needs its own payload (unlike, say, CalendarAction's SELECT_DAY,
+ *  which needs a date) — just a mode to switch on. `eventOccursOnDate`
+ *  (utils/recurrence.ts) is the exhaustive switch that gives this type
+ *  meaning; this file only declares the shape. */
+export type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 /** One entry in the schedule list: a day plus every event that falls on it. */
 export interface ScheduleDayGroup {

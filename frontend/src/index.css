@@ -328,18 +328,11 @@ body {
   margin-left: 1px;
 }
 
-.work {
-  background: var(--accent-work);
-}
-.sports {
-  background: var(--accent-sports);
-}
-.kids {
-  background: var(--accent-kids);
-}
-.other {
-  background: var(--accent-other);
-}
+/* Category swatch colors are now arbitrary per-category data (the user can
+ * add categories with any palette color), painted via inline `style` at
+ * every call site (Day, DayDetails, ScheduleDayRow, Legend) rather than a
+ * fixed set of CSS classes — there's no longer a closed set of class names
+ * to enumerate here. */
 
 /* ----------------------------------------------------------------------
    Day details panel
@@ -382,6 +375,13 @@ body {
 .event-category {
   height: 9px;
   width: 9px;
+  flex-shrink: 0;
+}
+
+.event-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
   flex-shrink: 0;
 }
 
@@ -564,8 +564,9 @@ body {
 }
 
 .entry {
-  position: relative;
-  padding-left: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
@@ -573,26 +574,10 @@ body {
   color: var(--text-dim);
 }
 
-.entry::before {
-  content: '';
-  position: absolute;
+.entry-swatch {
   height: 7px;
   width: 7px;
-  top: 4px;
-  left: 0;
-}
-
-.entry.work::before {
-  background: var(--accent-work);
-}
-.entry.sports::before {
-  background: var(--accent-sports);
-}
-.entry.kids::before {
-  background: var(--accent-kids);
-}
-.entry.other::before {
-  background: var(--accent-other);
+  flex-shrink: 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -650,7 +635,8 @@ body {
   gap: 6px;
 }
 
-.add-event-form label {
+.add-event-form label,
+.add-event-form .field-label {
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -668,8 +654,85 @@ body {
   font-family: var(--font-body);
 }
 
+/* The read-only date shown in place of a picker — bordered like an input
+ * so it still reads as "a field," but dashed (the same perforation motif
+ * used elsewhere) and without an input's solid background, so it's
+ * visually obvious this one isn't something to click into. */
+.field-static-value {
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px dashed var(--rule-strong);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.new-category {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.color-swatch-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-swatch-option {
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-swatch-option.selected {
+  border-color: var(--text);
+}
+
+.new-category-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.new-category-actions button {
+  padding: 7px 12px;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.new-category-actions button:last-child {
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: var(--ink-fixed);
+}
+
+.new-category-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .add-event-form input:focus,
 .add-event-form select:focus,
+.color-swatch-option:focus-visible,
 .view-toggle button:focus-visible,
 .theme-toggle:focus-visible,
 .add-event-trigger:focus-visible,

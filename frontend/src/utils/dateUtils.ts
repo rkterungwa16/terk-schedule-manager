@@ -69,27 +69,32 @@ export function formatDayNumber(date: Date): string {
   return date.toLocaleDateString('en-US', { day: '2-digit' });
 }
 
-/**
- * Formats a Date as the `yyyy-mm-dd` string an `<input type="date">`
- * expects for its `value`. Deliberately built from local getters (not
- * `toISOString`, which converts to UTC and can shift the date by a day
- * depending on the user's timezone offset).
- */
-export function toInputDateValue(date: Date): string {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+/** Full, unambiguous date label for the read-only date shown in the
+ *  add-event form — "Tuesday, August 25, 2026". */
+export function formatFullDate(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
-/** Inverse of toInputDateValue — parses the browser's `yyyy-mm-dd` value
- *  back into a local Date (again avoiding UTC-parsing pitfalls of
- *  `new Date('yyyy-mm-dd')`, which parses as UTC midnight). */
-export function fromInputDateValue(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return null;
-  const [, year, month, day] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day));
+/**
+ * Formats a "HH:MM" 24-hour time string (the value shape
+ * `<input type="time">` produces and consumes) as a human-readable 12-hour
+ * label — "09:00" → "9:00 AM". Falls back to the raw string for anything
+ * that doesn't parse, rather than throwing, since this only ever runs on
+ * data the app itself already validated going in.
+ */
+export function formatTimeLabel(time: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!match) return time;
+  const hour24 = Number(match[1]);
+  const minute = match[2];
+  const period = hour24 < 12 ? 'AM' : 'PM';
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${hour12}:${minute} ${period}`;
 }
 
 /**

@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import type { CalendarEvent } from '../types/calendar.types';
 import { formatDayName, formatDayNumber, isSameDay, isSameMonth } from '../utils/dateUtils';
+import { useCategories } from '../context/CategoriesContext';
+import { getCategory } from '../data/categories';
 
 interface DayProps {
   date: Date;
@@ -31,8 +33,19 @@ interface DayProps {
  * Without both of those, `memo` is dead weight: new array/function
  * literals created every render would fail the shallow-equality check
  * and force a re-render anyway, while still paying the comparison cost.
+ *
+ * One caveat `memo` doesn't cover: `useCategories()` below reads Context,
+ * and a Context value change re-renders every consumer regardless of
+ * `memo` — props aren't the only thing that can trigger a render.
+ * Creating a new category re-renders all 42 cells for that one reason.
+ * That's the right tradeoff (categories are read by id on every render
+ * anyway, and adding one is a rare, deliberate action, not something that
+ * happens on a hot path like scrolling or selecting a day), just worth
+ * being precise about rather than implying `memo` makes this component
+ * immune to all re-renders.
  */
 function DayComponent({ date, monthAnchor, today, events, isSelected, onSelect }: DayProps) {
+  const { categories } = useCategories();
   const inCurrentMonth = isSameMonth(date, monthAnchor);
   const isToday = isSameDay(date, today);
   const hasEvents = inCurrentMonth && events.length > 0;
@@ -78,7 +91,10 @@ function DayComponent({ date, monthAnchor, today, events, isSelected, onSelect }
       {inCurrentMonth && (
         <div className="day-events" aria-hidden="true">
           {visibleEvents.map((event) => (
-            <span key={event.id} className={event.color} />
+            <span
+              key={event.id}
+              style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
+            />
           ))}
           {overflowCount > 0 && <span className="day-events-overflow">+{overflowCount}</span>}
         </div>
