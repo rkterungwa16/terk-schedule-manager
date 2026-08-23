@@ -1,24 +1,29 @@
 import type { CalendarAction, CalendarReducerState } from '../types/calendar.types';
 import { assertUnreachable } from '../types/calendar.types';
-import { addMonths, isSameDay } from '../utils/dateUtils';
+import { isSameDay } from '../utils/dateUtils';
 
 export function createInitialState(anchor: Date = new Date()): CalendarReducerState {
   return {
     current: new Date(anchor.getFullYear(), anchor.getMonth(), 1),
     selectedDate: null,
-    view: { status: 'idle' },
   };
 }
 
 /**
- * `useReducer` (rather than several `useState` calls) is the right tool
- * here because the three pieces of state — the visible month, the
- * selected day, and the animation phase — change *together* as atomic
- * transitions. Modeling them as separate `useState` calls invites
- * "torn" intermediate renders (e.g. `current` updated but `view` not yet
- * flipped to 'leaving'), which is exactly the class of bug the original
- * jQuery code worked around with manually-ordered imperative calls
- * (`this.next = true` set as a side effect *before* calling `draw()`).
+ * `useReducer` (rather than a couple of `useState` calls) is still the
+ * right tool even with just two fields: `current` and `selectedDate`
+ * change together in SET_MONTH (moving to a different month clears
+ * whatever was selected in the old one — see that case below), and a
+ * reducer keeps that pairing atomic rather than relying on two separate
+ * `setState` calls always being written in the right order at every call
+ * site.
+ *
+ * There used to be a third field here, `view` (a discriminated union
+ * tracking a leaving/entering slide animation for Prev/Next clicks), and
+ * two more action types driving it. Once Month view became a continuous
+ * scroll (see MonthScrollView) instead of one-month-at-a-time navigation,
+ * there was no more click to animate a transition for — both views now
+ * report their own visible-month changes via SET_MONTH, the same way.
  *
  * The `CalendarAction` discriminated union means every `case` below
  * narrows `action` to exactly the variant with that `type`, so
@@ -30,29 +35,6 @@ export function calendarReducer(
   action: CalendarAction
 ): CalendarReducerState {
   switch (action.type) {
-    case 'NEXT_MONTH':
-      return {
-        ...state,
-        view: { status: 'leaving', direction: 'next' },
-      };
-
-    case 'PREV_MONTH':
-      return {
-        ...state,
-        view: { status: 'leaving', direction: 'prev' },
-      };
-
-    case 'TRANSITION_END': {
-      if (state.view.status !== 'leaving') return state;
-      const { direction } = state.view;
-      const delta = direction === 'next' ? 1 : -1;
-      return {
-        ...state,
-        current: addMonths(state.current, delta),
-        view: { status: 'entering', direction },
-      };
-    }
-
     case 'SELECT_DAY': {
       const { date } = action.payload;
       const alreadySelected = state.selectedDate && isSameDay(state.selectedDate, date);
@@ -66,22 +48,18 @@ export function calendarReducer(
       return { ...state, selectedDate: null };
 
     case 'SET_MONTH': {
-      // A silent jump — used when Schedule view's scroll position tells us
-      // the visible month changed, so Month view shows the same month the
-      // instant the user switches back to it. Deliberately distinct from
-      // NEXT_MONTH/PREV_MONTH: those trigger the leaving/entering slide
-      // animation, which makes sense for an explicit arrow click but not
-      // for "the background view quietly stayed in sync while scrolling
-      // somewhere else" — Month view isn't even mounted to animate while
-      // Schedule view is open. Clears `selectedDate` too: a day selected
-      // in whatever month was previously current has no meaning once
-      // browsing has moved to a different month entirely.
+      // Dispatched by whichever view (Month or Schedule) reports that its
+      // scroll position moved to a different month — this is how the
+      // header, and the *other* view's initial scroll position the next
+      // time it mounts, stay in sync with wherever the user actually is.
+      // Clears `selectedDate` too: a day selected in whatever month was
+      // previously current has no meaning once browsing has moved to a
+      // different month entirely.
       if (state.current.getTime() === action.payload.month.getTime()) return state;
       return {
         ...state,
         current: action.payload.month,
         selectedDate: null,
-        view: { status: 'idle' },
       };
     }
 

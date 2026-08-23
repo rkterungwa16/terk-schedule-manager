@@ -1,12 +1,29 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import type { CalendarEvent } from '../types/calendar.types';
+import type { CalendarEvent, ScheduleRow } from '../types/calendar.types';
 import { isSameDay } from '../utils/dateUtils';
 import { raf1 } from '../utils/raf1';
 import { useInfiniteMonths } from '../hooks/useInfiniteMonths';
 import { useScheduleRows } from '../hooks/useScheduleRows';
-import { useScheduleVirtualizer } from '../hooks/useScheduleVirtualizer';
+import { useVirtualList } from '../hooks/useVirtualList';
 import { ScheduleDayRow } from './ScheduleDayRow';
 import { ScheduleMonthDivider } from './ScheduleMonthDivider';
+
+const DIVIDER_HEIGHT_ESTIMATE = 36;
+const DAY_ROW_MIN_HEIGHT_ESTIMATE = 60;
+const EVENT_LINE_HEIGHT_ESTIMATE = 28;
+
+/** Schedule-row-specific size estimate, passed into the generic
+ *  `useVirtualList` rather than living inside it — a day row's height is
+ *  dominated by whichever is taller: the fixed date column, or its stack
+ *  of event lines. This is only a starting guess — ResizeObserver corrects
+ *  it to the real rendered height once the row actually mounts. */
+function estimateRowHeight(row: ScheduleRow): number {
+  if (row.kind === 'month-divider') return DIVIDER_HEIGHT_ESTIMATE;
+  return Math.max(
+    DAY_ROW_MIN_HEIGHT_ESTIMATE,
+    24 + row.group.events.length * EVENT_LINE_HEIGHT_ESTIMATE
+  );
+}
 
 interface ScheduleViewProps {
   events: CalendarEvent[];
@@ -34,8 +51,8 @@ const SENTINEL_MARGIN_PX = 800;
 export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: ScheduleViewProps) {
   const { months, loadPast, loadFuture, ensureMonthLoaded } = useInfiniteMonths(initialMonth);
   const rows = useScheduleRows(months, events);
-  const { offsets, totalHeight, range, recomputeRange, measureRow, findIndexForOffset } =
-    useScheduleVirtualizer(rows);
+  const { offsets, totalHeight, range, recomputeRange, measureItem, findIndexForOffset } =
+    useVirtualList(rows, estimateRowHeight);
 
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -215,7 +232,7 @@ export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: Sch
             style={{ transform: `translateY(${offsets[range.start] ?? 0}px)` }}
           >
             {rows.slice(range.start, range.end).map((row) => (
-              <div key={row.key} ref={measureRow(row.key)} className="schedule-row">
+              <div key={row.key} ref={measureItem(row.key)} className="schedule-row">
                 {row.kind === 'month-divider' ? (
                   <ScheduleMonthDivider label={row.label} />
                 ) : (

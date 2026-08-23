@@ -1,18 +1,14 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useReducer, useState } from 'react';
 import type { CalendarEvent, CalendarEventInput, CalendarDisplayMode } from '../types/calendar.types';
-import { hasDirection } from '../types/calendar.types';
 import { calendarReducer, createInitialState } from '../hooks/calendarReducer';
-import { addMonths, buildMonthGrid } from '../utils/dateUtils';
-import { useEventsByDay, getEventsForDay } from '../hooks/useEventsByDay';
 import { MOCK_EVENTS } from '../data/mockEvents';
 import { CategoriesProvider } from '../context/CategoriesContext';
 import { CalendarHeader } from './CalendarHeader';
-import { MonthGrid } from './MonthGrid';
+import { MonthScrollView } from './MonthScrollView';
 import { ScheduleView } from './ScheduleView';
 import { ViewToggle } from './ViewToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { useTheme } from '../hooks/useTheme';
-import { DayDetails } from './DayDetails';
 import { Legend } from './Legend';
 import { Modal } from './Modal';
 import { AddEventForm } from './AddEventForm';
@@ -45,16 +41,6 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   const [displayMode, setDisplayMode] = useState<CalendarDisplayMode>('month');
   const [theme, toggleTheme] = useTheme();
 
-  // Computed once here (rather than inside MonthGrid) because it's also
-  // exactly what useEventsByDay needs: "which specific days should we
-  // evaluate recurrence against" — recurrence has no way to answer "which
-  // days have events" without first being told which days to check (see
-  // useEventsByDay's performance note).
-  const monthGridDays = useMemo(() => buildMonthGrid(state.current), [state.current]);
-  const eventsByDay = useEventsByDay(events, monthGridDays);
-
-  const handlePrev = useCallback(() => dispatch({ type: 'PREV_MONTH' }), []);
-  const handleNext = useCallback(() => dispatch({ type: 'NEXT_MONTH' }), []);
   const handleSelectDay = useCallback(
     (date: Date) => dispatch({ type: 'SELECT_DAY', payload: { date } }),
     []
@@ -63,12 +49,15 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
 
   const handleOpenAddEvent = useCallback(() => setIsAddingEvent(true), []);
   const handleCloseAddEvent = useCallback(() => setIsAddingEvent(false), []);
-  // Scroll position in Schedule view drives `state.current` directly (via
-  // the reducer's SET_MONTH), rather than a separate piece of state — so
-  // switching back to Month view shows exactly the month last scrolled to,
-  // and the header (which reads `state.current` regardless of mode) never
-  // has two different ideas of "the current month" to reconcile.
-  const handleScheduleMonthChange = useCallback(
+  // Both views now scroll through months continuously rather than
+  // navigating one at a time, and both drive `state.current` the same
+  // way: scroll position tells us the visible month changed, and we jump
+  // straight there via SET_MONTH (no slide animation — there's nothing to
+  // animate between when the view isn't re-mounting, just scrolling).
+  // That's what keeps the header correct regardless of which view the
+  // user is actually looking at, and what makes switching views land on
+  // the same month you were just looking at in the other one.
+  const handleVisibleMonthChange = useCallback(
     (month: Date) => dispatch({ type: 'SET_MONTH', payload: { month } }),
     []
   );
@@ -89,84 +78,30 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
     setIsAddingEvent(false);
   }, []);
 
-  // Drives the 'leaving' -> 'entering' -> 'idle' state machine on a timer,
-  // standing in for the CSS `animationend` DOM event the original vanilla
-  // version listened for. Kept in an effect (not inline in the handler)
-  // because it's a reaction to `state.view` changing, not to the click
-  // itself — the dependency array documents exactly that relationship.
-  useEffect(() => {
-    if (state.view.status === 'leaving') {
-      const timeout = window.setTimeout(() => dispatch({ type: 'TRANSITION_END' }), 400);
-      return () => window.clearTimeout(timeout);
-    }
-    if (state.view.status === 'entering') {
-      const timeout = window.setTimeout(() => dispatch({ type: 'TRANSITION_END' }), 400);
-      return () => window.clearTimeout(timeout);
-    }
-  }, [state.view]);
-
-  // Type narrowing in action: `hasDirection` narrows `CalendarViewState`
-  // down to the two variants that actually carry `direction`, so this can
-  // read `state.view.direction` without a cast or an `as` assertion.
-  const animationClass = hasDirection(state.view)
-    ? `${state.view.status} ${state.view.direction}`
-    : 'idle';
-
-  const selectedDayEvents = state.selectedDate
-    ? getEventsForDay(eventsByDay, state.selectedDate)
-    : null;
-
-  // What Prev/Next navigation is *headed toward*, computed immediately
-  // rather than waiting for the animation to finish. `state.current` only
-  // actually updates at TRANSITION_END — a deliberate ~400ms after the
-  // click, so MonthGrid's own slide-out animation has something to show
-  // (see calendarReducer's NEXT_MONTH/PREV_MONTH cases). But that same lag
-  // means anything reading `state.current` during the 'leaving' phase —
-  // the header, and Schedule view's initial scroll position if the user
-  // switches views mid-click — would show the month being left, not the
-  // one just requested. MonthGrid itself still reads the literal
-  // `state.current` below (it needs the real transition timing to animate
-  // correctly); this anticipated value is only for the two places that
-  // just need to know "what month did the user ask for," immediately.
-  const effectiveCurrentMonth =
-    state.view.status === 'leaving'
-      ? addMonths(state.current, state.view.direction === 'next' ? 1 : -1)
-      : state.current;
-
   return (
     <CategoriesProvider>
       <div id="calendar">
-        <CalendarHeader
-          monthAnchor={effectiveCurrentMonth}
-          onPrev={displayMode === 'month' ? handlePrev : undefined}
-          onNext={displayMode === 'month' ? handleNext : undefined}
-        />
+        <CalendarHeader monthAnchor={state.current} />
         <div className="toolbar">
           <ViewToggle mode={displayMode} onChange={setDisplayMode} />
           <ThemeToggle mode={theme} onToggle={toggleTheme} />
         </div>
 
         {displayMode === 'month' ? (
-          <>
-            <MonthGrid
-              monthAnchor={state.current}
-              days={monthGridDays}
-              eventsByDay={eventsByDay}
-              selectedDate={state.selectedDate}
-              onSelectDay={handleSelectDay}
-              animationClass={animationClass}
-            />
-            {selectedDayEvents && (
-              <div onClick={handleCloseDetails}>
-                <DayDetails events={selectedDayEvents} onAddEvent={handleOpenAddEvent} />
-              </div>
-            )}
-          </>
+          <MonthScrollView
+            events={events}
+            initialMonth={state.current}
+            selectedDate={state.selectedDate}
+            onSelectDay={handleSelectDay}
+            onAddEvent={handleOpenAddEvent}
+            onCloseDetails={handleCloseDetails}
+            onVisibleMonthChange={handleVisibleMonthChange}
+          />
         ) : (
           <ScheduleView
             events={events}
-            initialMonth={effectiveCurrentMonth}
-            onVisibleMonthChange={handleScheduleMonthChange}
+            initialMonth={state.current}
+            onVisibleMonthChange={handleVisibleMonthChange}
           />
         )}
 

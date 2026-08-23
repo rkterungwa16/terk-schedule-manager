@@ -123,35 +123,6 @@ body {
   letter-spacing: 0.06em;
 }
 
-.left,
-.right {
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  top: 50%;
-  margin-top: -6px;
-  cursor: pointer;
-}
-
-.left {
-  border-width: 6px 9px 6px 0;
-  border-color: transparent var(--text-dim) transparent transparent;
-  left: 20px;
-}
-.left:hover {
-  border-right-color: var(--text);
-}
-
-.right {
-  border-width: 6px 0 6px 9px;
-  border-color: transparent transparent transparent var(--text-dim);
-  right: 20px;
-}
-.right:hover {
-  border-left-color: var(--text);
-}
-
 /* ----------------------------------------------------------------------
    Toolbar — view toggle (Month/Schedule) plus the theme toggle, sharing
    one row and one set of hairline dividers.
@@ -210,26 +181,22 @@ body {
 }
 
 /* ----------------------------------------------------------------------
-   Month grid
+   Month grid — now scrolled continuously (see MonthScrollView), not
+   click-navigated, so there's no leaving/entering slide transition to
+   animate between anymore; `.month` just needs to lay out its weeks.
    ---------------------------------------------------------------------- */
 
-.month {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  opacity: 1;
+/* Visual separation between consecutive month blocks in the continuous
+ * scroll — the same dashed "perforation" motif used for the divider at
+ * the top of each block (see .schedule-month-divider), placed at the
+ * bottom instead so a month's grid is clearly closed off before the next
+ * one's divider begins. */
+.month-block {
+  border-bottom: 2px dashed var(--rule-strong);
 }
 
-.month.leaving {
-  opacity: 0;
-}
-.month.leaving.next {
-  transform: translateY(-10px);
-}
-.month.leaving.prev {
-  transform: translateY(10px);
-}
-.month.entering {
-  opacity: 1;
-  transform: translateY(0);
+.month-block:last-child {
+  border-bottom: none;
 }
 
 .week {

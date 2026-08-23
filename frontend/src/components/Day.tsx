@@ -29,7 +29,7 @@ interface DayProps {
  *      changes — the day's own slice of that map is a stable reference
  *      between recomputes).
  *   2. `onSelect` is a *stable* function reference (guaranteed by
- *      `useCallback` in the parent — see MonthGrid.tsx).
+ *      `useCallback` in the parent — see MonthBlock.tsx).
  * Without both of those, `memo` is dead weight: new array/function
  * literals created every render would fail the shallow-equality check
  * and force a re-render anyway, while still paying the comparison cost.

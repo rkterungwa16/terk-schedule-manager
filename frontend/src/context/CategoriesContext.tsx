@@ -14,7 +14,7 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null);
  * by several components with no relationship to each other in the tree —
  * `Day` and `Legend` sit under Month view, `ScheduleDayRow` sits under
  * Schedule view, `AddEventForm` sits under the modal — while the
- * components *between* them (`MonthGrid`, `ScheduleView`, `Calendar`
+ * components *between* them (`MonthBlock`, `ScheduleView`, `Calendar`
  * itself) have no use for a category list at all. Prop-drilling
  * `categories` through every one of those intermediaries just to reach
  * five unrelated leaves is exactly the case Context exists for; passing it
