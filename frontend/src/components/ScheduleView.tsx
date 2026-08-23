@@ -73,6 +73,10 @@ export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: Sch
   // however many rows were just prepended in front of it.
   const pastAnchorRef = useRef<{ key: string; withinRowOffset: number } | null>(null);
   const pendingTodayScrollRef = useRef(false);
+  // Guards the mount-time jump below so it only ever fires once — after
+  // that, scroll position is the user's (or the "Today" button's) to
+  // control, not something to keep silently resetting.
+  const hasDoneInitialScrollRef = useRef(false);
 
   // Tracks the last month reported to the parent, keyed as "year-month" so
   // a re-render that doesn't actually change months (most of them — this
@@ -159,6 +163,23 @@ export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: Sch
   // available rows (and therefore what should be rendered) just changed.
   useLayoutEffect(() => {
     const el = scrollElementRef.current;
+
+    // The initial loaded window is [previous month, current month, next
+    // month] (see useInfiniteMonths), and a freshly-mounted scroll
+    // container starts at scrollTop 0 — the top of the *earliest* loaded
+    // month's rows, not the current month's. Without this, the page would
+    // open scrolled to last month instead of now. Jump straight to
+    // `initialMonth`'s first row, once, the moment it's actually present.
+    if (!hasDoneInitialScrollRef.current && el) {
+      const initialIndex = rows.findIndex(
+        (row) => row.month.getFullYear() === initialMonth.getFullYear() &&
+          row.month.getMonth() === initialMonth.getMonth()
+      );
+      if (initialIndex >= 0) {
+        hasDoneInitialScrollRef.current = true;
+        el.scrollTop = offsets[initialIndex];
+      }
+    }
 
     if (isLoadingPastRef.current) {
       const anchor = pastAnchorRef.current;

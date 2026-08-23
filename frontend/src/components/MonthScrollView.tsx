@@ -85,6 +85,10 @@ export function MonthScrollView({
   const isLoadingFutureRef = useRef(false);
   const pastAnchorRef = useRef<{ key: string; withinItemOffset: number } | null>(null);
   const pendingTodayScrollRef = useRef(false);
+  // Guards the mount-time jump below so it only ever fires once — after
+  // that, scroll position is the user's (or the "Today" button's) to
+  // control, not something to keep silently resetting.
+  const hasDoneInitialScrollRef = useRef(false);
 
   const lastReportedMonthKeyRef = useRef<string | null>(null);
 
@@ -150,6 +154,22 @@ export function MonthScrollView({
 
   useLayoutEffect(() => {
     const el = scrollElementRef.current;
+
+    // The initial loaded window is [previous month, current month, next
+    // month] (see useInfiniteMonths), and a freshly-mounted scroll
+    // container starts at scrollTop 0 — the top of the *earliest* loaded
+    // month, not the current one. Without this, the page would open on
+    // last month's grid and require an immediate scroll just to reach
+    // "now," which is exactly the bug being fixed here: jump straight to
+    // `initialMonth`'s offset before the very first paint, once, the
+    // moment it's actually present in `items`.
+    if (!hasDoneInitialScrollRef.current && el) {
+      const initialIndex = items.findIndex((item) => isSameMonth(item.month, initialMonth));
+      if (initialIndex >= 0) {
+        hasDoneInitialScrollRef.current = true;
+        el.scrollTop = offsets[initialIndex];
+      }
+    }
 
     if (isLoadingPastRef.current) {
       const anchor = pastAnchorRef.current;
