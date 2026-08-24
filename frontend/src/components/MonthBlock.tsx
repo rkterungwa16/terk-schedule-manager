@@ -12,6 +12,7 @@ interface MonthBlockProps {
   selectedDate: Date | null;
   onSelectDay: (date: Date) => void;
   onAddEvent: () => void;
+  onViewEvent: (event: CalendarEvent) => void;
   onCloseDetails: () => void;
   today: Date;
 }
@@ -31,6 +32,7 @@ export function MonthBlock({
   selectedDate,
   onSelectDay,
   onAddEvent,
+  onViewEvent,
   onCloseDetails,
   today,
 }: MonthBlockProps) {
@@ -81,6 +83,7 @@ export function MonthBlock({
                 <DayDetails
                   events={getEventsForDay(eventsByDay, selectedDate)}
                   onAddEvent={onAddEvent}
+                  onViewEvent={onViewEvent}
                 />
               </div>
             )}

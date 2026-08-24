@@ -12,6 +12,7 @@ import { useTheme } from '../hooks/useTheme';
 import { Legend } from './Legend';
 import { Modal } from './Modal';
 import { AddEventForm } from './AddEventForm';
+import { EventEditPanel } from './EventEditPanel';
 
 interface CalendarProps {
   /** Optional seed data — useful for tests/storybook. Once the component
@@ -33,6 +34,12 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
   const [events, setEvents] = useState<CalendarEvent[]>(() => eventsProp ?? MOCK_EVENTS);
 
   const [isAddingEvent, setIsAddingEvent] = useState(false);
+  // The event currently open in the slide-in detail/edit panel — separate
+  // from `isAddingEvent`/Modal, since viewing an existing event and
+  // creating a new one are different flows with different containers
+  // (center modal vs. left-anchored slide-in), even though they end up
+  // sharing the same underlying field UI (see EventFields.tsx).
+  const [viewingEvent, setViewingEvent] = useState<CalendarEvent | null>(null);
 
   // Independent of the reducer on purpose: switching between Month and
   // Schedule is a plain, un-animated UI toggle with no other state that
@@ -78,6 +85,19 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
     setIsAddingEvent(false);
   }, []);
 
+  const handleViewEvent = useCallback((event: CalendarEvent) => setViewingEvent(event), []);
+  const handleCloseEventPanel = useCallback(() => setViewingEvent(null), []);
+
+  // Replaces the one event matching `id` with the freshly-validated input,
+  // keeping every other event untouched. Same functional-update reasoning
+  // as `handleAddEvent`: no `events` in the dependency array, so this
+  // callback's identity stays stable regardless of how large the event
+  // list grows.
+  const handleUpdateEvent = useCallback((id: string, input: CalendarEventInput) => {
+    setEvents((prev) => prev.map((event) => (event.id === id ? { ...input, id } : event)));
+    setViewingEvent(null);
+  }, []);
+
   return (
     <CategoriesProvider>
       <div id="calendar">
@@ -94,6 +114,7 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
             selectedDate={state.selectedDate}
             onSelectDay={handleSelectDay}
             onAddEvent={handleOpenAddEvent}
+            onViewEvent={handleViewEvent}
             onCloseDetails={handleCloseDetails}
             onVisibleMonthChange={handleVisibleMonthChange}
           />
@@ -101,6 +122,7 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
           <ScheduleView
             events={events}
             initialMonth={state.current}
+            onViewEvent={handleViewEvent}
             onVisibleMonthChange={handleVisibleMonthChange}
           />
         )}
@@ -118,6 +140,10 @@ export function Calendar({ events: eventsProp }: CalendarProps) {
               onCancel={handleCloseAddEvent}
             />
           </Modal>
+        )}
+
+        {viewingEvent && (
+          <EventEditPanel event={viewingEvent} onSave={handleUpdateEvent} onClose={handleCloseEventPanel} />
         )}
       </div>
     </CategoriesProvider>

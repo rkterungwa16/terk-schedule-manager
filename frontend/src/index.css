@@ -328,6 +328,17 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* `.event` renders as a real <button> now (for the clickable case) but
+   * the empty-state row is a plain <div> with the same class — these
+   * resets make the button case look identical to the div case rather
+   * than picking up native button chrome. */
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .event.empty {
@@ -337,6 +348,11 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   justify-content: flex-start;
+  cursor: default;
+}
+
+.event:not(.empty):hover {
+  background: var(--panel-alt);
 }
 
 .event-category {
@@ -507,6 +523,21 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 14px;
+  /* Real <button> for clickable rows; the empty-state "No events" row
+   * stays a plain <li> with a different class, so these resets only ever
+   * apply to the interactive case. */
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.schedule-event:hover {
+  background: var(--panel-alt);
 }
 
 .schedule-event-empty {
@@ -584,6 +615,55 @@ body {
   border: 1px solid var(--rule-strong);
   padding: 24px;
   width: 320px;
+}
+
+/* The slide-in event detail/edit panel — same backdrop treatment as the
+ * modal, but the panel itself is anchored to the left edge and full
+ * height, rather than centered, and animates in with a horizontal slide
+ * instead of a fade. */
+.event-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 13, 0.5);
+  z-index: 1000;
+}
+
+.event-panel {
+  position: relative;
+  height: 100%;
+  width: 320px;
+  max-width: 85%;
+  background: var(--panel);
+  border-right: 1px solid var(--rule-strong);
+  padding: 24px;
+  overflow-y: auto;
+  animation: slideInFromLeft 0.3s ease both;
+}
+
+.event-panel-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.event-panel-close:hover {
+  color: var(--text);
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .add-event-form h2 {
@@ -748,5 +828,8 @@ body {
   }
   body {
     transition: none;
+  }
+  .event-panel {
+    animation: none;
   }
 }

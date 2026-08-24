@@ -17,6 +17,7 @@ interface MonthScrollViewProps {
   selectedDate: Date | null;
   onSelectDay: (date: Date) => void;
   onAddEvent: () => void;
+  onViewEvent: (event: CalendarEvent) => void;
   onCloseDetails: () => void;
   onVisibleMonthChange?: (month: Date) => void;
 }
@@ -57,6 +58,7 @@ export function MonthScrollView({
   selectedDate,
   onSelectDay,
   onAddEvent,
+  onViewEvent,
   onCloseDetails,
   onVisibleMonthChange,
 }: MonthScrollViewProps) {
@@ -242,6 +244,7 @@ export function MonthScrollView({
                   selectedDate={selectedDate}
                   onSelectDay={onSelectDay}
                   onAddEvent={onAddEvent}
+                  onViewEvent={onViewEvent}
                   onCloseDetails={onCloseDetails}
                   today={TODAY}
                 />

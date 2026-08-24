@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { ScheduleDayGroup } from '../types/calendar.types';
+import type { CalendarEvent, ScheduleDayGroup } from '../types/calendar.types';
 import { formatTimeLabel, isSameDay } from '../utils/dateUtils';
 import { useCategories } from '../context/CategoriesContext';
 import { getCategory } from '../data/categories';
@@ -7,6 +7,7 @@ import { getCategory } from '../data/categories';
 interface ScheduleDayRowProps {
   group: ScheduleDayGroup;
   today: Date;
+  onViewEvent: (event: CalendarEvent) => void;
 }
 
 const WEEKDAY_FORMAT = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
@@ -23,7 +24,7 @@ const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'short' });
  * Same Context caveat as `Day`: adding a category still re-renders every
  * row regardless of `memo`, since that's a Context change, not a prop one.
  */
-function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
+function ScheduleDayRowComponent({ group, today, onViewEvent }: ScheduleDayRowProps) {
   const { categories } = useCategories();
   const isToday = isSameDay(group.date, today);
 
@@ -39,13 +40,15 @@ function ScheduleDayRowComponent({ group, today }: ScheduleDayRowProps) {
           <li className="schedule-event schedule-event-empty">No events</li>
         ) : (
           group.events.map((event) => (
-            <li key={event.id} className="schedule-event">
-              <span
-                className="event-category"
-                style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
-              />
-              <span className="event-time">{formatTimeLabel(event.startTime)}</span>
-              <span>{event.eventName}</span>
+            <li key={event.id}>
+              <button type="button" className="schedule-event" onClick={() => onViewEvent(event)}>
+                <span
+                  className="event-category"
+                  style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
+                />
+                <span className="event-time">{formatTimeLabel(event.startTime)}</span>
+                <span>{event.eventName}</span>
+              </button>
             </li>
           ))
         )}

@@ -1,37 +1,38 @@
 import { useState, type FormEvent } from 'react';
-import type { CalendarEventInput, RecurrenceFrequency } from '../types/calendar.types';
+import type { CalendarEvent, CalendarEventInput, RecurrenceFrequency } from '../types/calendar.types';
 import { validateEventForm } from '../utils/validateEvent';
 import { useCategories } from '../context/CategoriesContext';
 import { EventFields } from './EventFields';
 
-interface AddEventFormProps {
-  /** Fixed, not editable in this form — whichever day the user clicked
-   *  before the modal opened. */
-  initialDate: Date;
-  onSubmit: (input: CalendarEventInput) => void;
+interface EditEventFormProps {
+  event: CalendarEvent;
+  onSave: (id: string, input: CalendarEventInput) => void;
   onCancel: () => void;
 }
 
-export function AddEventForm({ initialDate, onSubmit, onCancel }: AddEventFormProps) {
+/**
+ * The date is pre-filled from `event.date` and, like AddEventForm, stays
+ * read-only — moving an event to a different day isn't in scope here
+ * (that would need some way to pick a date, which is exactly the calendar
+ * picker this app deliberately doesn't have in any modal). What's
+ * editable is everything else: name, time, recurrence, category.
+ */
+export function EditEventForm({ event, onSave, onCancel }: EditEventFormProps) {
   const { categories } = useCategories();
 
-  const [eventName, setEventName] = useState('');
-  const [categoryId, setCategoryId] = useState(() => categories[0]?.id ?? '');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
-  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>('none');
+  const [eventName, setEventName] = useState(event.eventName);
+  const [categoryId, setCategoryId] = useState(event.categoryId);
+  const [startTime, setStartTime] = useState(event.startTime);
+  const [endTime, setEndTime] = useState(event.endTime);
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>(event.recurrence);
   const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
 
-    // `validateEventForm` returns a Result<CalendarEventInput>. TypeScript
-    // won't let us read `result.value` until we've checked `result.ok` —
-    // the discriminated union makes "used an unvalidated value" a compile
-    // error rather than a bug found in production.
     const result = validateEventForm(
       { eventName, categoryId, startTime, endTime, recurrence },
-      initialDate,
+      event.date,
       categories
     );
 
@@ -41,17 +42,17 @@ export function AddEventForm({ initialDate, onSubmit, onCancel }: AddEventFormPr
     }
 
     setError(null);
-    onSubmit(result.value);
+    onSave(event.id, result.value);
   }
 
   return (
     <form className="add-event-form" onSubmit={handleSubmit}>
-      <h2>Add Event</h2>
+      <h2>Event Details</h2>
 
       <EventFields
         eventName={eventName}
         onEventNameChange={setEventName}
-        date={initialDate}
+        date={event.date}
         startTime={startTime}
         onStartTimeChange={setStartTime}
         endTime={endTime}
@@ -72,7 +73,7 @@ export function AddEventForm({ initialDate, onSubmit, onCancel }: AddEventFormPr
         <button type="button" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit">Add Event</button>
+        <button type="submit">Save Changes</button>
       </div>
     </form>
   );

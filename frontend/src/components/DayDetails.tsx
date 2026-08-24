@@ -6,9 +6,10 @@ import { formatTimeLabel } from '../utils/dateUtils';
 interface DayDetailsProps {
   events: CalendarEvent[];
   onAddEvent: () => void;
+  onViewEvent: (event: CalendarEvent) => void;
 }
 
-export function DayDetails({ events, onAddEvent }: DayDetailsProps) {
+export function DayDetails({ events, onAddEvent, onViewEvent }: DayDetailsProps) {
   const { categories } = useCategories();
 
   return (
@@ -21,14 +22,26 @@ export function DayDetails({ events, onAddEvent }: DayDetailsProps) {
           </div>
         )}
         {events.map((event) => (
-          <div className="event" key={event.id}>
+          <button
+            type="button"
+            className="event"
+            key={event.id}
+            onClick={(clickEvent) => {
+              // Same reasoning as the "+ Add event" button below: this
+              // panel sits inside a wrapper that closes it on any click,
+              // so opening an event's details needs to stop that click
+              // from reaching the wrapper first.
+              clickEvent.stopPropagation();
+              onViewEvent(event);
+            }}
+          >
             <div
               className="event-category"
               style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
             />
             <span className="event-time">{formatTimeLabel(event.startTime)}</span>
             <span>{event.eventName}</span>
-          </div>
+          </button>
         ))}
         <button
           type="button"

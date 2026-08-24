@@ -31,6 +31,7 @@ interface ScheduleViewProps {
    *  month Month view is currently showing, so switching views feels
    *  continuous rather than resetting somewhere arbitrary. */
   initialMonth: Date;
+  onViewEvent: (event: CalendarEvent) => void;
   /** Called whenever the month at the top of the visible viewport changes
    *  — lets the header track what's actually on screen as the user
    *  scrolls, the same way a physical desk calendar's visible page tells
@@ -48,7 +49,7 @@ const TODAY = new Date();
  *  scaled down for our shorter rows. */
 const SENTINEL_MARGIN_PX = 800;
 
-export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: ScheduleViewProps) {
+export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonthChange }: ScheduleViewProps) {
   const { months, loadPast, loadFuture, ensureMonthLoaded } = useInfiniteMonths(initialMonth);
   const rows = useScheduleRows(months, events);
   const { offsets, totalHeight, range, recomputeRange, measureItem, findIndexForOffset } =
@@ -257,7 +258,7 @@ export function ScheduleView({ events, initialMonth, onVisibleMonthChange }: Sch
                 {row.kind === 'month-divider' ? (
                   <ScheduleMonthDivider label={row.label} />
                 ) : (
-                  <ScheduleDayRow group={row.group} today={TODAY} />
+                  <ScheduleDayRow group={row.group} today={TODAY} onViewEvent={onViewEvent} />
                 )}
               </div>
             ))}
