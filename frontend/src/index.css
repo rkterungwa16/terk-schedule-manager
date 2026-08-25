@@ -95,8 +95,36 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 #calendar {
   width: 420px;
+}
+
+/* Every mobile-specific adjustment lives here, scoped to this one
+ * breakpoint, rather than changed on the base rules above — so anything
+ * wider than 480px renders exactly as it did before: `#calendar` a rigid
+ * 420px, `body` with vertical-only padding. Below 480px, that rigid width
+ * is what caused the overflow (content and padding bleeding past the
+ * screen edges on any phone narrower than 420px): `#calendar` needs to
+ * shrink with the viewport instead of forcing a horizontal scroll. */
+@media (max-width: 480px) {
+
+  #calendar {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  /* Fixed 320px has no fallback for a viewport narrower than that (a small
+   * phone in portrait) — shrinking it here only, so anything above this
+   * breakpoint keeps the exact original 320px. */
+  .modal-content {
+    width: min(320px, 90vw);
+  }
 }
 
 /* ----------------------------------------------------------------------
