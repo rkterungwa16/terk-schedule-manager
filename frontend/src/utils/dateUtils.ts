@@ -27,7 +27,9 @@ export function addMonths(date: Date, amount: number): Date {
 
 /** Integer number of calendar months from `a` to `b` (can be negative). */
 export function monthsBetween(a: Date, b: Date): number {
-  return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  return (
+    (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
+  );
 }
 
 export function addDays(date: Date, amount: number): Date {
@@ -58,25 +60,25 @@ export function dayKey(date: Date): string {
 }
 
 export function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 export function formatDayName(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'short' });
+  return date.toLocaleDateString("en-US", { weekday: "short" });
 }
 
 export function formatDayNumber(date: Date): string {
-  return date.toLocaleDateString('en-US', { day: '2-digit' });
+  return date.toLocaleDateString("en-US", { day: "2-digit" });
 }
 
 /** Full, unambiguous date label for the read-only date shown in the
  *  add-event form — "Tuesday, August 25, 2026". */
 export function formatFullDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -92,7 +94,7 @@ export function formatTimeLabel(time: string): string {
   if (!match) return time;
   const hour24 = Number(match[1]);
   const minute = match[2];
-  const period = hour24 < 12 ? 'AM' : 'PM';
+  const period = hour24 < 12 ? "AM" : "PM";
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   return `${hour12}:${minute} ${period}`;
 }

@@ -1,8 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import type { CalendarEventInput, RecurrenceFrequency } from '../types/calendar.types';
-import { validateEventForm } from '../utils/validateEvent';
-import { useCategories } from '../context/CategoriesContext';
-import { EventFields } from './EventFields';
+import { useState, type FormEvent } from "react";
+import type {
+  CalendarEventInput,
+  RecurrenceFrequency,
+} from "../types/calendar.types";
+import { validateEventForm } from "../utils/validateEvent";
+import { useCategories } from "../context/CategoriesContext";
+import { EventFields } from "./EventFields";
 
 interface AddEventFormProps {
   /** Fixed, not editable in this form — whichever day the user clicked
@@ -12,14 +15,18 @@ interface AddEventFormProps {
   onCancel: () => void;
 }
 
-export function AddEventForm({ initialDate, onSubmit, onCancel }: AddEventFormProps) {
+export function AddEventForm({
+  initialDate,
+  onSubmit,
+  onCancel,
+}: AddEventFormProps) {
   const { categories } = useCategories();
 
-  const [eventName, setEventName] = useState('');
-  const [categoryId, setCategoryId] = useState(() => categories[0]?.id ?? '');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
-  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>('none');
+  const [eventName, setEventName] = useState("");
+  const [categoryId, setCategoryId] = useState(() => categories[0]?.id ?? "");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>("none");
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -32,7 +39,7 @@ export function AddEventForm({ initialDate, onSubmit, onCancel }: AddEventFormPr
     const result = validateEventForm(
       { eventName, categoryId, startTime, endTime, recurrence },
       initialDate,
-      categories
+      categories,
     );
 
     if (!result.ok) {

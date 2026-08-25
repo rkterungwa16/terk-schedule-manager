@@ -1,22 +1,22 @@
-import { useId, useState } from 'react';
-import type { RecurrenceFrequency } from '../types/calendar.types';
-import { formatFullDate } from '../utils/dateUtils';
-import { useCategories } from '../context/CategoriesContext';
-import { CATEGORY_COLOR_PALETTE } from '../data/categories';
+import { useId, useState } from "react";
+import type { RecurrenceFrequency } from "../types/calendar.types";
+import { formatFullDate } from "../utils/dateUtils";
+import { useCategories } from "../context/CategoriesContext";
+import { CATEGORY_COLOR_PALETTE } from "../data/categories";
 
 const RECURRENCE_OPTIONS: { value: RecurrenceFrequency; label: string }[] = [
-  { value: 'none', label: 'Does not repeat' },
-  { value: 'daily', label: 'Every day' },
-  { value: 'weekly', label: 'Every week' },
-  { value: 'monthly', label: 'Every month' },
-  { value: 'yearly', label: 'Every year' },
+  { value: "none", label: "Does not repeat" },
+  { value: "daily", label: "Every day" },
+  { value: "weekly", label: "Every week" },
+  { value: "monthly", label: "Every month" },
+  { value: "yearly", label: "Every year" },
 ];
 
 /** Sentinel option value that opens the inline "new category" fields,
  *  rather than being a real category id — kept as a distinct constant
  *  (not a magic string re-typed in two places) so the select's onChange
  *  and the JSX option share exactly one source of truth for it. */
-const NEW_CATEGORY_OPTION = '__new_category__';
+const NEW_CATEGORY_OPTION = "__new_category__";
 
 export interface EventFieldsProps {
   eventName: string;
@@ -72,8 +72,10 @@ export function EventFields({
   const newCategoryNameId = useId();
 
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState(CATEGORY_COLOR_PALETTE[0]);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState(
+    CATEGORY_COLOR_PALETTE[0],
+  );
 
   function handleCategoryChange(value: string) {
     if (value === NEW_CATEGORY_OPTION) {
@@ -89,7 +91,7 @@ export function EventFields({
     const created = addCategory(name, newCategoryColor);
     onCategoryChange(created.id);
     setIsCreatingCategory(false);
-    setNewCategoryName('');
+    setNewCategoryName("");
     setNewCategoryColor(CATEGORY_COLOR_PALETTE[0]);
   }
 
@@ -143,7 +145,9 @@ export function EventFields({
         <select
           id={recurrenceId}
           value={recurrence}
-          onChange={(event) => onRecurrenceChange(event.target.value as RecurrenceFrequency)}
+          onChange={(event) =>
+            onRecurrenceChange(event.target.value as RecurrenceFrequency)
+          }
         >
           {RECURRENCE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -180,7 +184,11 @@ export function EventFields({
               placeholder="Category name"
               autoFocus
             />
-            <div className="color-swatch-picker" role="radiogroup" aria-label="Category color">
+            <div
+              className="color-swatch-picker"
+              role="radiogroup"
+              aria-label="Category color"
+            >
               {CATEGORY_COLOR_PALETTE.map((color) => (
                 <button
                   key={color}
@@ -188,17 +196,24 @@ export function EventFields({
                   role="radio"
                   aria-checked={color === newCategoryColor}
                   aria-label={color}
-                  className={`color-swatch-option${color === newCategoryColor ? ' selected' : ''}`}
+                  className={`color-swatch-option${color === newCategoryColor ? " selected" : ""}`}
                   style={{ backgroundColor: color }}
                   onClick={() => setNewCategoryColor(color)}
                 />
               ))}
             </div>
             <div className="new-category-actions">
-              <button type="button" onClick={() => setIsCreatingCategory(false)}>
+              <button
+                type="button"
+                onClick={() => setIsCreatingCategory(false)}
+              >
                 Cancel
               </button>
-              <button type="button" onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
+              <button
+                type="button"
+                onClick={handleCreateCategory}
+                disabled={!newCategoryName.trim()}
+              >
                 Create category
               </button>
             </div>

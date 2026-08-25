@@ -1,12 +1,18 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import type { CalendarEvent, ScheduleRow } from '../types/calendar.types';
-import { isSameDay } from '../utils/dateUtils';
-import { raf1 } from '../utils/raf1';
-import { useInfiniteMonths } from '../hooks/useInfiniteMonths';
-import { useScheduleRows } from '../hooks/useScheduleRows';
-import { useVirtualList } from '../hooks/useVirtualList';
-import { ScheduleDayRow } from './ScheduleDayRow';
-import { ScheduleMonthDivider } from './ScheduleMonthDivider';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
+import type { CalendarEvent, ScheduleRow } from "../types/calendar.types";
+import { isSameDay } from "../utils/dateUtils";
+import { raf1 } from "../utils/raf1";
+import { useInfiniteMonths } from "../hooks/useInfiniteMonths";
+import { useScheduleRows } from "../hooks/useScheduleRows";
+import { useVirtualList } from "../hooks/useVirtualList";
+import { ScheduleDayRow } from "./ScheduleDayRow";
+import { ScheduleMonthDivider } from "./ScheduleMonthDivider";
 
 const DIVIDER_HEIGHT_ESTIMATE = 36;
 const DAY_ROW_MIN_HEIGHT_ESTIMATE = 60;
@@ -18,10 +24,10 @@ const EVENT_LINE_HEIGHT_ESTIMATE = 28;
  *  of event lines. This is only a starting guess — ResizeObserver corrects
  *  it to the real rendered height once the row actually mounts. */
 function estimateRowHeight(row: ScheduleRow): number {
-  if (row.kind === 'month-divider') return DIVIDER_HEIGHT_ESTIMATE;
+  if (row.kind === "month-divider") return DIVIDER_HEIGHT_ESTIMATE;
   return Math.max(
     DAY_ROW_MIN_HEIGHT_ESTIMATE,
-    24 + row.group.events.length * EVENT_LINE_HEIGHT_ESTIMATE
+    24 + row.group.events.length * EVENT_LINE_HEIGHT_ESTIMATE,
   );
 }
 
@@ -49,11 +55,23 @@ const TODAY = new Date();
  *  scaled down for our shorter rows. */
 const SENTINEL_MARGIN_PX = 800;
 
-export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonthChange }: ScheduleViewProps) {
-  const { months, loadPast, loadFuture, ensureMonthLoaded } = useInfiniteMonths(initialMonth);
+export function ScheduleView({
+  events,
+  initialMonth,
+  onViewEvent,
+  onVisibleMonthChange,
+}: ScheduleViewProps) {
+  const { months, loadPast, loadFuture, ensureMonthLoaded } =
+    useInfiniteMonths(initialMonth);
   const rows = useScheduleRows(months, events);
-  const { offsets, totalHeight, range, recomputeRange, measureItem, findIndexForOffset } =
-    useVirtualList(rows, estimateRowHeight);
+  const {
+    offsets,
+    totalHeight,
+    range,
+    recomputeRange,
+    measureItem,
+    findIndexForOffset,
+  } = useVirtualList(rows, estimateRowHeight);
 
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -72,7 +90,9 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
   // boundary). Looked back up by key (not index) once the prepended
   // month's rows exist, since the anchor row's index shifts forward by
   // however many rows were just prepended in front of it.
-  const pastAnchorRef = useRef<{ key: string; withinRowOffset: number } | null>(null);
+  const pastAnchorRef = useRef<{ key: string; withinRowOffset: number } | null>(
+    null,
+  );
   const pendingTodayScrollRef = useRef(false);
   // Guards the mount-time jump below so it only ever fires once — after
   // that, scroll position is the user's (or the "Today" button's) to
@@ -95,7 +115,7 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
       lastReportedMonthKeyRef.current = key;
       onVisibleMonthChange(row.month);
     },
-    [rows, findIndexForOffset, onVisibleMonthChange]
+    [rows, findIndexForOffset, onVisibleMonthChange],
   );
 
   const handleIntersectTop = useCallback(() => {
@@ -106,7 +126,10 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
     const anchorIndex = findIndexForOffset(el.scrollTop);
     const anchorRow = rows[anchorIndex];
     pastAnchorRef.current = anchorRow
-      ? { key: anchorRow.key, withinRowOffset: el.scrollTop - offsets[anchorIndex] }
+      ? {
+          key: anchorRow.key,
+          withinRowOffset: el.scrollTop - offsets[anchorIndex],
+        }
       : null;
 
     isLoadingPastRef.current = true;
@@ -145,10 +168,11 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           if (entry.target === topEl) handleIntersectTopRef.current();
-          else if (entry.target === bottomEl) handleIntersectBottomRef.current();
+          else if (entry.target === bottomEl)
+            handleIntersectBottomRef.current();
         }
       },
-      { root, rootMargin: `${SENTINEL_MARGIN_PX}px 0px` }
+      { root, rootMargin: `${SENTINEL_MARGIN_PX}px 0px` },
     );
 
     observer.observe(topEl);
@@ -173,8 +197,9 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
     // `initialMonth`'s first row, once, the moment it's actually present.
     if (!hasDoneInitialScrollRef.current && el) {
       const initialIndex = rows.findIndex(
-        (row) => row.month.getFullYear() === initialMonth.getFullYear() &&
-          row.month.getMonth() === initialMonth.getMonth()
+        (row) =>
+          row.month.getFullYear() === initialMonth.getFullYear() &&
+          row.month.getMonth() === initialMonth.getMonth(),
       );
       if (initialIndex >= 0) {
         hasDoneInitialScrollRef.current = true;
@@ -221,12 +246,14 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
         recomputeRange(el.scrollTop, el.clientHeight);
         reportVisibleMonth(el.scrollTop);
       }),
-    [recomputeRange, reportVisibleMonth]
+    [recomputeRange, reportVisibleMonth],
   );
 
   useEffect(() => {
     if (!pendingTodayScrollRef.current) return;
-    const todayIndex = rows.findIndex((row) => row.kind === 'day' && isSameDay(row.group.date, TODAY));
+    const todayIndex = rows.findIndex(
+      (row) => row.kind === "day" && isSameDay(row.group.date, TODAY),
+    );
     if (todayIndex >= 0) {
       pendingTodayScrollRef.current = false;
       const el = scrollElementRef.current;
@@ -241,24 +268,48 @@ export function ScheduleView({ events, initialMonth, onViewEvent, onVisibleMonth
 
   return (
     <div className="schedule-view-wrapper">
-      <button type="button" className="schedule-today-button" onClick={handleJumpToToday}>
+      <button
+        type="button"
+        className="schedule-today-button"
+        onClick={handleJumpToToday}
+      >
         Today
       </button>
-      <div className="schedule-view" ref={scrollElementRef} onScroll={handleScroll}>
+      <div
+        className="schedule-view"
+        ref={scrollElementRef}
+        onScroll={handleScroll}
+      >
         <div className="schedule-virtual-space" style={{ height: totalHeight }}>
-          <div ref={topSentinelRef} className="schedule-sentinel" style={{ top: 0 }} />
-          <div ref={bottomSentinelRef} className="schedule-sentinel" style={{ top: totalHeight }} />
+          <div
+            ref={topSentinelRef}
+            className="schedule-sentinel"
+            style={{ top: 0 }}
+          />
+          <div
+            ref={bottomSentinelRef}
+            className="schedule-sentinel"
+            style={{ top: totalHeight }}
+          />
 
           <div
             className="schedule-window"
             style={{ transform: `translateY(${offsets[range.start] ?? 0}px)` }}
           >
             {rows.slice(range.start, range.end).map((row) => (
-              <div key={row.key} ref={measureItem(row.key)} className="schedule-row">
-                {row.kind === 'month-divider' ? (
+              <div
+                key={row.key}
+                ref={measureItem(row.key)}
+                className="schedule-row"
+              >
+                {row.kind === "month-divider" ? (
                   <ScheduleMonthDivider label={row.label} />
                 ) : (
-                  <ScheduleDayRow group={row.group} today={TODAY} onViewEvent={onViewEvent} />
+                  <ScheduleDayRow
+                    group={row.group}
+                    today={TODAY}
+                    onViewEvent={onViewEvent}
+                  />
                 )}
               </div>
             ))}

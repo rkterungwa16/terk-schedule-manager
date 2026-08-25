@@ -28,7 +28,7 @@
    ============================================================================ */
 
 :root,
-[data-theme='dark'] {
+[data-theme="dark"] {
   --bg: #1d2127;
   --panel: #262b33;
   --panel-alt: #323844;
@@ -45,7 +45,7 @@
   --danger: #c15b7b;
 }
 
-[data-theme='light'] {
+[data-theme="light"] {
   --bg: #f3efe4;
   --panel: #eae4d5;
   --panel-alt: #ded6c2;
@@ -74,9 +74,9 @@
   --accent-today-fill: #e2b33c;
   --ink-fixed: #1d2127;
 
-  --font-display: 'Space Grotesk', 'Arial Narrow', sans-serif;
-  --font-body: 'IBM Plex Sans', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-display: "Space Grotesk", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
 }
 
 * {
@@ -92,7 +92,9 @@ body {
   background: var(--bg);
   display: flex;
   justify-content: center;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 #root {
@@ -113,7 +115,6 @@ body {
  * screen edges on any phone narrower than 420px): `#calendar` needs to
  * shrink with the viewport instead of forcing a horizontal scroll. */
 @media (max-width: 480px) {
-
   #calendar {
     width: 100%;
     max-width: 420px;
@@ -844,7 +845,7 @@ body {
   cursor: pointer;
 }
 
-.form-actions button[type='submit'] {
+.form-actions button[type="submit"] {
   background: var(--accent-today-fill);
   border-color: var(--accent-today-fill);
   color: var(--ink-fixed);

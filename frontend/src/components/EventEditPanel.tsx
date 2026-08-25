@@ -1,5 +1,8 @@
-import type { CalendarEvent, CalendarEventInput } from '../types/calendar.types';
-import { EditEventForm } from './EditEventForm';
+import type {
+  CalendarEvent,
+  CalendarEventInput,
+} from "../types/calendar.types";
+import { EditEventForm } from "./EditEventForm";
 
 interface EventEditPanelProps {
   event: CalendarEvent;
@@ -17,7 +20,11 @@ interface EventEditPanelProps {
  * managing a manual open/closed class — consistent with the existing
  * pattern instead of introducing a new one for just this panel.
  */
-export function EventEditPanel({ event, onSave, onClose }: EventEditPanelProps) {
+export function EventEditPanel({
+  event,
+  onSave,
+  onClose,
+}: EventEditPanelProps) {
   return (
     <div className="event-panel-overlay" onClick={onClose} role="presentation">
       <div
@@ -26,7 +33,12 @@ export function EventEditPanel({ event, onSave, onClose }: EventEditPanelProps) 
         role="dialog"
         aria-label="Event details"
       >
-        <button type="button" className="event-panel-close" onClick={onClose} aria-label="Close">
+        <button
+          type="button"
+          className="event-panel-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
           ×
         </button>
         <EditEventForm event={event} onSave={onSave} onCancel={onClose} />

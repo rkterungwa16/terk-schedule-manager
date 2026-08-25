@@ -17,16 +17,17 @@
       // (dark) theme on every load for someone who has light mode saved.
       (function () {
         try {
-          var stored = localStorage.getItem('calendar-theme');
+          var stored = localStorage.getItem("calendar-theme");
           var theme =
-            stored === 'light' || stored === 'dark'
+            stored === "light" || stored === "dark"
               ? stored
-              : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-                ? 'light'
-                : 'dark';
-          document.documentElement.setAttribute('data-theme', theme);
+              : window.matchMedia &&
+                  window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+          document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.setAttribute("data-theme", "dark");
         }
       })();
     </script>

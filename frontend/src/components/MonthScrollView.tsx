@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import type { CalendarEvent } from '../types/calendar.types';
-import { isSameMonth } from '../utils/dateUtils';
-import { raf1 } from '../utils/raf1';
-import { useInfiniteMonths } from '../hooks/useInfiniteMonths';
-import { useVirtualList } from '../hooks/useVirtualList';
-import { MonthBlock } from './MonthBlock';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
+import type { CalendarEvent } from "../types/calendar.types";
+import { isSameMonth } from "../utils/dateUtils";
+import { raf1 } from "../utils/raf1";
+import { useInfiniteMonths } from "../hooks/useInfiniteMonths";
+import { useVirtualList } from "../hooks/useVirtualList";
+import { MonthBlock } from "./MonthBlock";
 
 interface MonthBlockItem {
   key: string;
@@ -62,7 +68,8 @@ export function MonthScrollView({
   onCloseDetails,
   onVisibleMonthChange,
 }: MonthScrollViewProps) {
-  const { months, loadPast, loadFuture, ensureMonthLoaded } = useInfiniteMonths(initialMonth);
+  const { months, loadPast, loadFuture, ensureMonthLoaded } =
+    useInfiniteMonths(initialMonth);
 
   const items = useMemo<MonthBlockItem[]>(() => {
     const seen = new Set<string>();
@@ -76,8 +83,14 @@ export function MonthScrollView({
     return result;
   }, [months]);
 
-  const { offsets, totalHeight, range, recomputeRange, measureItem, findIndexForOffset } =
-    useVirtualList(items, () => MONTH_BLOCK_HEIGHT_ESTIMATE);
+  const {
+    offsets,
+    totalHeight,
+    range,
+    recomputeRange,
+    measureItem,
+    findIndexForOffset,
+  } = useVirtualList(items, () => MONTH_BLOCK_HEIGHT_ESTIMATE);
 
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +98,10 @@ export function MonthScrollView({
 
   const isLoadingPastRef = useRef(false);
   const isLoadingFutureRef = useRef(false);
-  const pastAnchorRef = useRef<{ key: string; withinItemOffset: number } | null>(null);
+  const pastAnchorRef = useRef<{
+    key: string;
+    withinItemOffset: number;
+  } | null>(null);
   const pendingTodayScrollRef = useRef(false);
   // Guards the mount-time jump below so it only ever fires once — after
   // that, scroll position is the user's (or the "Today" button's) to
@@ -103,7 +119,7 @@ export function MonthScrollView({
       lastReportedMonthKeyRef.current = item.key;
       onVisibleMonthChange(item.month);
     },
-    [items, findIndexForOffset, onVisibleMonthChange]
+    [items, findIndexForOffset, onVisibleMonthChange],
   );
 
   const handleIntersectTop = useCallback(() => {
@@ -114,7 +130,10 @@ export function MonthScrollView({
     const anchorIndex = findIndexForOffset(el.scrollTop);
     const anchorItem = items[anchorIndex];
     pastAnchorRef.current = anchorItem
-      ? { key: anchorItem.key, withinItemOffset: el.scrollTop - offsets[anchorIndex] }
+      ? {
+          key: anchorItem.key,
+          withinItemOffset: el.scrollTop - offsets[anchorIndex],
+        }
       : null;
 
     isLoadingPastRef.current = true;
@@ -143,10 +162,11 @@ export function MonthScrollView({
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           if (entry.target === topEl) handleIntersectTopRef.current();
-          else if (entry.target === bottomEl) handleIntersectBottomRef.current();
+          else if (entry.target === bottomEl)
+            handleIntersectBottomRef.current();
         }
       },
-      { root, rootMargin: `${SENTINEL_MARGIN_PX}px 0px` }
+      { root, rootMargin: `${SENTINEL_MARGIN_PX}px 0px` },
     );
 
     observer.observe(topEl);
@@ -166,7 +186,9 @@ export function MonthScrollView({
     // `initialMonth`'s offset before the very first paint, once, the
     // moment it's actually present in `items`.
     if (!hasDoneInitialScrollRef.current && el) {
-      const initialIndex = items.findIndex((item) => isSameMonth(item.month, initialMonth));
+      const initialIndex = items.findIndex((item) =>
+        isSameMonth(item.month, initialMonth),
+      );
       if (initialIndex >= 0) {
         hasDoneInitialScrollRef.current = true;
         el.scrollTop = offsets[initialIndex];
@@ -204,12 +226,14 @@ export function MonthScrollView({
         recomputeRange(el.scrollTop, el.clientHeight);
         reportVisibleMonth(el.scrollTop);
       }),
-    [recomputeRange, reportVisibleMonth]
+    [recomputeRange, reportVisibleMonth],
   );
 
   useEffect(() => {
     if (!pendingTodayScrollRef.current) return;
-    const todayIndex = items.findIndex((item) => isSameMonth(item.month, TODAY));
+    const todayIndex = items.findIndex((item) =>
+      isSameMonth(item.month, TODAY),
+    );
     if (todayIndex >= 0) {
       pendingTodayScrollRef.current = false;
       const el = scrollElementRef.current;
@@ -224,20 +248,40 @@ export function MonthScrollView({
 
   return (
     <div className="schedule-view-wrapper">
-      <button type="button" className="schedule-today-button" onClick={handleJumpToToday}>
+      <button
+        type="button"
+        className="schedule-today-button"
+        onClick={handleJumpToToday}
+      >
         Today
       </button>
-      <div className="schedule-view" ref={scrollElementRef} onScroll={handleScroll}>
+      <div
+        className="schedule-view"
+        ref={scrollElementRef}
+        onScroll={handleScroll}
+      >
         <div className="schedule-virtual-space" style={{ height: totalHeight }}>
-          <div ref={topSentinelRef} className="schedule-sentinel" style={{ top: 0 }} />
-          <div ref={bottomSentinelRef} className="schedule-sentinel" style={{ top: totalHeight }} />
+          <div
+            ref={topSentinelRef}
+            className="schedule-sentinel"
+            style={{ top: 0 }}
+          />
+          <div
+            ref={bottomSentinelRef}
+            className="schedule-sentinel"
+            style={{ top: totalHeight }}
+          />
 
           <div
             className="schedule-window"
             style={{ transform: `translateY(${offsets[range.start] ?? 0}px)` }}
           >
             {items.slice(range.start, range.end).map((item) => (
-              <div key={item.key} ref={measureItem(item.key)} className="schedule-row">
+              <div
+                key={item.key}
+                ref={measureItem(item.key)}
+                className="schedule-row"
+              >
                 <MonthBlock
                   month={item.month}
                   events={events}

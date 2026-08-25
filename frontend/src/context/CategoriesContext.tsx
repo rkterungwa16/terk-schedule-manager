@@ -1,6 +1,13 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { EventCategory } from '../types/calendar.types';
-import { DEFAULT_CATEGORIES } from '../data/categories';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { EventCategory } from "../types/calendar.types";
+import { DEFAULT_CATEGORIES } from "../data/categories";
 
 interface CategoriesContextValue {
   categories: EventCategory[];
@@ -23,7 +30,8 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null);
  * parent-child relationship, neither of which is true here.
  */
 export function CategoriesProvider({ children }: { children: ReactNode }) {
-  const [categories, setCategories] = useState<EventCategory[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] =
+    useState<EventCategory[]>(DEFAULT_CATEGORIES);
 
   const addCategory = useCallback((name: string, color: string) => {
     const newCategory: EventCategory = { id: crypto.randomUUID(), name, color };
@@ -31,15 +39,22 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     return newCategory;
   }, []);
 
-  const value = useMemo(() => ({ categories, addCategory }), [categories, addCategory]);
+  const value = useMemo(
+    () => ({ categories, addCategory }),
+    [categories, addCategory],
+  );
 
-  return <CategoriesContext.Provider value={value}>{children}</CategoriesContext.Provider>;
+  return (
+    <CategoriesContext.Provider value={value}>
+      {children}
+    </CategoriesContext.Provider>
+  );
 }
 
 export function useCategories(): CategoriesContextValue {
   const context = useContext(CategoriesContext);
   if (!context) {
-    throw new Error('useCategories must be used within a CategoriesProvider');
+    throw new Error("useCategories must be used within a CategoriesProvider");
   }
   return context;
 }

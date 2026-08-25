@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import type { LoadDirection } from '../types/calendar.types';
-import { addMonths, monthsBetween } from '../utils/dateUtils';
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { LoadDirection } from "../types/calendar.types";
+import { addMonths, monthsBetween } from "../utils/dateUtils";
 
 /**
  * Two independent layers make "scroll infinitely without loading very
@@ -71,19 +71,21 @@ export function useInfiniteMonths(anchorMonth: Date) {
   const extend = useCallback((direction: LoadDirection) => {
     setRange((prev) => {
       const next =
-        direction === 'past' ? { start: prev.start - 1, end: prev.end } : { start: prev.start, end: prev.end + 1 };
+        direction === "past"
+          ? { start: prev.start - 1, end: prev.end }
+          : { start: prev.start, end: prev.end + 1 };
 
       const loadedCount = next.end - next.start + 1;
       if (loadedCount <= MAX_LOADED_MONTHS) return next;
 
-      return direction === 'past'
+      return direction === "past"
         ? { start: next.start, end: next.end - 1 }
         : { start: next.start + 1, end: next.end };
     });
   }, []);
 
-  const loadPast = useCallback(() => extend('past'), [extend]);
-  const loadFuture = useCallback(() => extend('future'), [extend]);
+  const loadPast = useCallback(() => extend("past"), [extend]);
+  const loadFuture = useCallback(() => extend("future"), [extend]);
 
   /**
    * A direct jump (the "Today" button) rather than a scroll-edge trigger:
