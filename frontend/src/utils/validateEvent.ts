@@ -1,9 +1,5 @@
-import type {
-  CalendarEventInput,
-  EventCategory,
-  EventFormResult,
-} from "../types/calendar.types";
-import { isRecurrenceFrequency } from "../types/calendar.types";
+import type { CalendarEventInput, EventCategory, EventFormResult } from '../types/calendar.types';
+import { isRecurrenceFrequency } from '../types/calendar.types';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -45,32 +41,32 @@ export interface RawEventFormValues {
 export function validateEventForm(
   raw: RawEventFormValues,
   date: Date,
-  categories: EventCategory[],
+  categories: EventCategory[]
 ): EventFormResult {
   const eventName = raw.eventName.trim();
   if (!eventName) {
-    return { ok: false, error: "Event name is required." };
+    return { ok: false, error: 'Event name is required.' };
   }
 
   // Category membership is a runtime check now, not a type guard — the set
   // of valid ids isn't closed at compile time once categories are
   // user-extensible (see calendar.types.ts section 1).
   if (!categories.some((category) => category.id === raw.categoryId)) {
-    return { ok: false, error: "Choose a category." };
+    return { ok: false, error: 'Choose a category.' };
   }
 
   if (!TIME_PATTERN.test(raw.startTime) || !TIME_PATTERN.test(raw.endTime)) {
-    return { ok: false, error: "Pick a start and end time." };
+    return { ok: false, error: 'Pick a start and end time.' };
   }
   if (raw.endTime <= raw.startTime) {
     // "HH:MM" strings compare correctly with plain string comparison —
     // zero-padded 24-hour values sort lexicographically the same way they
     // sort chronologically, so no parsing is needed just to order them.
-    return { ok: false, error: "End time must be after start time." };
+    return { ok: false, error: 'End time must be after start time.' };
   }
 
   if (!isRecurrenceFrequency(raw.recurrence)) {
-    return { ok: false, error: "Choose how often this repeats." };
+    return { ok: false, error: 'Choose how often this repeats.' };
   }
 
   const value: CalendarEventInput = {

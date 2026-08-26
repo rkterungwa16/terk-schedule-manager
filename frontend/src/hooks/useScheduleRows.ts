@@ -1,8 +1,8 @@
-import { useMemo } from "react";
-import type { ScheduleRow } from "../types/calendar.types";
-import type { CalendarEvent } from "../types/calendar.types";
-import { dayKey, daysInMonth, formatMonthYear } from "../utils/dateUtils";
-import { getOccurringEvents } from "../utils/recurrence";
+import { useMemo } from 'react';
+import type { ScheduleRow } from '../types/calendar.types';
+import type { CalendarEvent } from '../types/calendar.types';
+import { dayKey, daysInMonth, formatMonthYear } from '../utils/dateUtils';
+import { getOccurringEvents } from '../utils/recurrence';
 
 /**
  * Builds the flat row list for however many months are currently loaded.
@@ -28,10 +28,7 @@ import { getOccurringEvents } from "../utils/recurrence";
  * why that guard exists; it protects this hook regardless of how a repeat
  * upstream might occur.
  */
-export function useScheduleRows(
-  months: Date[],
-  events: CalendarEvent[],
-): ScheduleRow[] {
+export function useScheduleRows(months: Date[], events: CalendarEvent[]): ScheduleRow[] {
   return useMemo(() => {
     const rows: ScheduleRow[] = [];
     const seenMonths = new Set<string>();
@@ -42,7 +39,7 @@ export function useScheduleRows(
       seenMonths.add(monthKey);
 
       rows.push({
-        kind: "month-divider",
+        kind: 'month-divider',
         key: `divider-${dayKey(month)}`,
         label: formatMonthYear(month),
         month,
@@ -52,7 +49,7 @@ export function useScheduleRows(
       for (let day = 1; day <= totalDays; day++) {
         const date = new Date(month.getFullYear(), month.getMonth(), day);
         rows.push({
-          kind: "day",
+          kind: 'day',
           key: dayKey(date),
           group: { date, events: getOccurringEvents(events, date) },
           month,

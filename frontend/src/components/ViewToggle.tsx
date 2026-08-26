@@ -1,5 +1,5 @@
-import { memo } from "react";
-import type { CalendarDisplayMode } from "../types/calendar.types";
+import { memo } from 'react';
+import type { CalendarDisplayMode } from '../types/calendar.types';
 
 interface ViewToggleProps {
   mode: CalendarDisplayMode;
@@ -11,8 +11,8 @@ interface ViewToggleProps {
 // grows a third variant, this list (and the type below) are the only two
 // places that need updating — the button rendering itself doesn't change.
 const MODES: { value: CalendarDisplayMode; label: string }[] = [
-  { value: "month", label: "Month" },
-  { value: "schedule", label: "Schedule" },
+  { value: 'month', label: 'Month' },
+  { value: 'schedule', label: 'Schedule' },
 ];
 
 function ViewToggleComponent({ mode, onChange }: ViewToggleProps) {
@@ -24,7 +24,7 @@ function ViewToggleComponent({ mode, onChange }: ViewToggleProps) {
           type="button"
           role="tab"
           aria-selected={mode === option.value}
-          className={mode === option.value ? "active" : ""}
+          className={mode === option.value ? 'active' : ''}
           onClick={() => onChange(option.value)}
         >
           {option.label}

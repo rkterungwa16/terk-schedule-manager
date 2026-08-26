@@ -1,6 +1,6 @@
-import type { CalendarEvent } from "../types/calendar.types";
-import { assertUnreachable } from "../types/calendar.types";
-import { isSameDay } from "./dateUtils";
+import type { CalendarEvent } from '../types/calendar.types';
+import { assertUnreachable } from '../types/calendar.types';
+import { isSameDay } from './dateUtils';
 
 /**
  * A `CalendarEvent` is a *template*, not a list of dates: it stores exactly
@@ -27,19 +27,16 @@ export function eventOccursOnDate(event: CalendarEvent, date: Date): boolean {
   if (date.getTime() < startOfCalendarDay(event.date).getTime()) return false;
 
   switch (event.recurrence) {
-    case "none":
+    case 'none':
       return isSameDay(event.date, date);
-    case "daily":
+    case 'daily':
       return true;
-    case "weekly":
+    case 'weekly':
       return date.getDay() === event.date.getDay();
-    case "monthly":
+    case 'monthly':
       return date.getDate() === event.date.getDate();
-    case "yearly":
-      return (
-        date.getMonth() === event.date.getMonth() &&
-        date.getDate() === event.date.getDate()
-      );
+    case 'yearly':
+      return date.getMonth() === event.date.getMonth() && date.getDate() === event.date.getDate();
     default:
       return assertUnreachable(event.recurrence);
   }
@@ -50,9 +47,6 @@ function startOfCalendarDay(date: Date): Date {
 }
 
 /** All events (from `events`) that occur on `date`, per `eventOccursOnDate`. */
-export function getOccurringEvents(
-  events: CalendarEvent[],
-  date: Date,
-): CalendarEvent[] {
+export function getOccurringEvents(events: CalendarEvent[], date: Date): CalendarEvent[] {
   return events.filter((event) => eventOccursOnDate(event, date));
 }

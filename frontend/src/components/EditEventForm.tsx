@@ -1,12 +1,12 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent } from 'react';
 import type {
   CalendarEvent,
   CalendarEventInput,
   RecurrenceFrequency,
-} from "../types/calendar.types";
-import { validateEventForm } from "../utils/validateEvent";
-import { useCategories } from "../context/CategoriesContext";
-import { EventFields } from "./EventFields";
+} from '../types/calendar.types';
+import { validateEventForm } from '../utils/validateEvent';
+import { useCategories } from '../context/CategoriesContext';
+import { EventFields } from './EventFields';
 
 interface EditEventFormProps {
   event: CalendarEvent;
@@ -28,9 +28,7 @@ export function EditEventForm({ event, onSave, onCancel }: EditEventFormProps) {
   const [categoryId, setCategoryId] = useState(event.categoryId);
   const [startTime, setStartTime] = useState(event.startTime);
   const [endTime, setEndTime] = useState(event.endTime);
-  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>(
-    event.recurrence,
-  );
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>(event.recurrence);
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
@@ -39,7 +37,7 @@ export function EditEventForm({ event, onSave, onCancel }: EditEventFormProps) {
     const result = validateEventForm(
       { eventName, categoryId, startTime, endTime, recurrence },
       event.date,
-      categories,
+      categories
     );
 
     if (!result.ok) {

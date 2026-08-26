@@ -1,8 +1,6 @@
-import type {
-  CalendarEvent,
-  CalendarEventInput,
-} from "../types/calendar.types";
-import { EditEventForm } from "./EditEventForm";
+import type { CalendarEvent, CalendarEventInput } from '../types/calendar.types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { EditEventForm } from './EditEventForm';
 
 interface EventEditPanelProps {
   event: CalendarEvent;
@@ -20,25 +18,23 @@ interface EventEditPanelProps {
  * managing a manual open/closed class — consistent with the existing
  * pattern instead of introducing a new one for just this panel.
  */
-export function EventEditPanel({
-  event,
-  onSave,
-  onClose,
-}: EventEditPanelProps) {
+export function EventEditPanel({ event, onSave, onClose }: EventEditPanelProps) {
+  // Same reasoning as Modal: this component only exists while the panel
+  // is open, so the trap is simply active for its whole lifetime.
+  const panelRef = useFocusTrap<HTMLDivElement>(true, onClose);
+
   return (
     <div className="event-panel-overlay" onClick={onClose} role="presentation">
       <div
+        ref={panelRef}
         className="event-panel"
         onClick={(clickEvent) => clickEvent.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Event details"
+        tabIndex={-1}
       >
-        <button
-          type="button"
-          className="event-panel-close"
-          onClick={onClose}
-          aria-label="Close"
-        >
+        <button type="button" className="event-panel-close" onClick={onClose} aria-label="Close">
           ×
         </button>
         <EditEventForm event={event} onSave={onSave} onCancel={onClose} />

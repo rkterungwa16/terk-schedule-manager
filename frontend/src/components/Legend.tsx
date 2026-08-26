@@ -1,4 +1,4 @@
-import { useCategories } from "../context/CategoriesContext";
+import { useCategories } from '../context/CategoriesContext';
 
 /**
  * Previously derived by scanning `events` for whichever categories
@@ -23,10 +23,7 @@ export function Legend() {
     <div className="legend">
       {categories.map((category) => (
         <span className="entry" key={category.id}>
-          <span
-            className="entry-swatch"
-            style={{ backgroundColor: category.color }}
-          />
+          <span className="entry-swatch" style={{ backgroundColor: category.color }} />
           {category.name}
         </span>
       ))}

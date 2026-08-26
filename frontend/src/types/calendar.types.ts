@@ -68,7 +68,7 @@ export interface CalendarEvent {
  * CalendarEventInput automatically stays in sync if CalendarEvent ever
  * changes shape.
  */
-export type CalendarEventInput = Omit<CalendarEvent, "id">;
+export type CalendarEventInput = Omit<CalendarEvent, 'id'>;
 
 // ----------------------------------------------------------------------------
 // 3. Discriminated union for reducer actions. Using a *tagged* union (as
@@ -78,9 +78,9 @@ export type CalendarEventInput = Omit<CalendarEvent, "id">;
 // ----------------------------------------------------------------------------
 
 export type CalendarAction =
-  | { type: "SELECT_DAY"; payload: { date: Date } }
-  | { type: "CLOSE_DETAILS" }
-  | { type: "SET_MONTH"; payload: { month: Date } };
+  | { type: 'SELECT_DAY'; payload: { date: Date } }
+  | { type: 'CLOSE_DETAILS' }
+  | { type: 'SET_MONTH'; payload: { month: Date } };
 
 export interface CalendarReducerState {
   /** Whichever month the header currently displays — driven entirely by
@@ -106,7 +106,7 @@ export interface CalendarReducerState {
 type ActionPayload<A> = A extends { payload: infer P } ? P : never;
 
 export type ActionPayloadMap = {
-  [A in CalendarAction as A["type"]]: ActionPayload<A>;
+  [A in CalendarAction as A['type']]: ActionPayload<A>;
 };
 // Equivalent to:
 // {
@@ -124,7 +124,7 @@ export type ActionPayloadMap = {
 
 export function groupBy<T, K extends PropertyKey>(
   items: readonly T[],
-  keyFn: (item: T) => K,
+  keyFn: (item: T) => K
 ): Record<K, T[]> {
   const result = {} as Record<K, T[]>;
   for (const item of items) {
@@ -143,15 +143,13 @@ export function groupBy<T, K extends PropertyKey>(
 //    rest of the add-event form's validation, rather than here.
 // ----------------------------------------------------------------------------
 
-export function isRecurrenceFrequency(
-  value: unknown,
-): value is RecurrenceFrequency {
+export function isRecurrenceFrequency(value: unknown): value is RecurrenceFrequency {
   return (
-    value === "none" ||
-    value === "daily" ||
-    value === "weekly" ||
-    value === "monthly" ||
-    value === "yearly"
+    value === 'none' ||
+    value === 'daily' ||
+    value === 'weekly' ||
+    value === 'monthly' ||
+    value === 'yearly'
   );
 }
 
@@ -193,19 +191,18 @@ export type EventFormResult = Result<CalendarEventInput>;
 //    don't.
 // ----------------------------------------------------------------------------
 
-export type CalendarDisplayMode = "month" | "schedule";
+export type CalendarDisplayMode = 'month' | 'schedule';
 
 /** Also a plain union, same reasoning as CalendarDisplayMode above —
  *  neither variant carries a payload. */
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = 'light' | 'dark';
 
 /** A third plain union in the same family: none of the five recurrence
  *  modes needs its own payload (unlike, say, CalendarAction's SELECT_DAY,
  *  which needs a date) — just a mode to switch on. `eventOccursOnDate`
  *  (utils/recurrence.ts) is the exhaustive switch that gives this type
  *  meaning; this file only declares the shape. */
-export type RecurrenceFrequency =
-  "none" | "daily" | "weekly" | "monthly" | "yearly";
+export type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 /** One entry in the schedule list: a day plus every event that falls on it. */
 export interface ScheduleDayGroup {
@@ -227,8 +224,8 @@ export interface ScheduleDayGroup {
 // ----------------------------------------------------------------------------
 
 export type ScheduleRow =
-  | { kind: "month-divider"; key: string; label: string; month: Date }
-  | { kind: "day"; key: string; group: ScheduleDayGroup; month: Date };
+  | { kind: 'month-divider'; key: string; label: string; month: Date }
+  | { kind: 'day'; key: string; group: ScheduleDayGroup; month: Date };
 
 /** Which edge of the loaded window a scroll-triggered load should extend. */
-export type LoadDirection = "past" | "future";
+export type LoadDirection = 'past' | 'future';

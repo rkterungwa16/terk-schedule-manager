@@ -1,5 +1,5 @@
-import { memo } from "react";
-import { formatMonthYear } from "../utils/dateUtils";
+import { memo } from 'react';
+import { formatMonthYear } from '../utils/dateUtils';
 
 interface CalendarHeaderProps {
   monthAnchor: Date;

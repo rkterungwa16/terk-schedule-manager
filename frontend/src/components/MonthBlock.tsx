@@ -1,15 +1,10 @@
-import { useCallback, useMemo } from "react";
-import type { CalendarEvent } from "../types/calendar.types";
-import {
-  buildMonthGrid,
-  dayKey,
-  isSameDay,
-  isSameMonth,
-} from "../utils/dateUtils";
-import { useEventsByDay, getEventsForDay } from "../hooks/useEventsByDay";
-import { Day } from "./Day";
-import { DayDetails } from "./DayDetails";
-import { ScheduleMonthDivider } from "./ScheduleMonthDivider";
+import { useCallback, useMemo } from 'react';
+import type { CalendarEvent } from '../types/calendar.types';
+import { buildMonthGrid, dayKey, isSameDay, isSameMonth } from '../utils/dateUtils';
+import { useEventsByDay, getEventsForDay } from '../hooks/useEventsByDay';
+import { Day } from './Day';
+import { DayDetails } from './DayDetails';
+import { ScheduleMonthDivider } from './ScheduleMonthDivider';
 
 interface MonthBlockProps {
   month: Date;
@@ -59,23 +54,15 @@ export function MonthBlock({
   // for the same selection).
   const selectedWeekIndex = useMemo(() => {
     if (!selectedDate || !isSameMonth(selectedDate, month)) return -1;
-    return weeks.findIndex((week) =>
-      week.some((date) => isSameDay(date, selectedDate)),
-    );
+    return weeks.findIndex((week) => week.some((date) => isSameDay(date, selectedDate)));
   }, [weeks, selectedDate, month]);
 
-  const handleSelect = useCallback(
-    (date: Date) => onSelectDay(date),
-    [onSelectDay],
-  );
+  const handleSelect = useCallback((date: Date) => onSelectDay(date), [onSelectDay]);
 
   return (
     <div className="month-block">
       <ScheduleMonthDivider
-        label={month.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })}
+        label={month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
       />
       <div className="month">
         {weeks.map((week, weekIndex) => (
@@ -88,9 +75,7 @@ export function MonthBlock({
                   monthAnchor={month}
                   today={today}
                   events={getEventsForDay(eventsByDay, date)}
-                  isSelected={
-                    selectedDate !== null && isSameDay(date, selectedDate)
-                  }
+                  isSelected={selectedDate !== null && isSameDay(date, selectedDate)}
                   onSelect={handleSelect}
                 />
               ))}

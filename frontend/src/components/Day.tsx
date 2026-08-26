@@ -1,13 +1,8 @@
-import { memo } from "react";
-import type { CalendarEvent } from "../types/calendar.types";
-import {
-  formatDayName,
-  formatDayNumber,
-  isSameDay,
-  isSameMonth,
-} from "../utils/dateUtils";
-import { useCategories } from "../context/CategoriesContext";
-import { getCategory } from "../data/categories";
+import { memo } from 'react';
+import type { CalendarEvent } from '../types/calendar.types';
+import { formatDayName, formatDayNumber, isSameDay, isSameMonth } from '../utils/dateUtils';
+import { useCategories } from '../context/CategoriesContext';
+import { getCategory } from '../data/categories';
 
 interface DayProps {
   date: Date;
@@ -49,24 +44,17 @@ interface DayProps {
  * being precise about rather than implying `memo` makes this component
  * immune to all re-renders.
  */
-function DayComponent({
-  date,
-  monthAnchor,
-  today,
-  events,
-  isSelected,
-  onSelect,
-}: DayProps) {
+function DayComponent({ date, monthAnchor, today, events, isSelected, onSelect }: DayProps) {
   const { categories } = useCategories();
   const inCurrentMonth = isSameMonth(date, monthAnchor);
   const isToday = isSameDay(date, today);
   const hasEvents = inCurrentMonth && events.length > 0;
 
-  const classNames = ["day"];
-  if (!inCurrentMonth) classNames.push("other");
-  else if (isToday) classNames.push("today");
-  if (isSelected) classNames.push("selected");
-  if (hasEvents) classNames.push("has-events");
+  const classNames = ['day'];
+  if (!inCurrentMonth) classNames.push('other');
+  else if (isToday) classNames.push('today');
+  if (isSelected) classNames.push('selected');
+  if (hasEvents) classNames.push('has-events');
 
   // Cap the number of dots actually drawn. The original version rendered
   // one square per event with no limit — fine for 1-2 events, but a day
@@ -83,14 +71,14 @@ function DayComponent({
   // for whom four 5px squares aren't a reliable signal on a small screen.
   const accessibleLabel = hasEvents
     ? `${formatDayName(date)} ${formatDayNumber(date)}, ${events.length} event${
-        events.length === 1 ? "" : "s"
+        events.length === 1 ? '' : 's'
       }`
     : `${formatDayName(date)} ${formatDayNumber(date)}`;
 
   return (
     <button
       type="button"
-      className={classNames.join(" ")}
+      className={classNames.join(' ')}
       onClick={() => onSelect(date)}
       aria-label={accessibleLabel}
     >
@@ -105,15 +93,10 @@ function DayComponent({
           {visibleEvents.map((event) => (
             <span
               key={event.id}
-              style={{
-                backgroundColor: getCategory(categories, event.categoryId)
-                  .color,
-              }}
+              style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
             />
           ))}
-          {overflowCount > 0 && (
-            <span className="day-events-overflow">+{overflowCount}</span>
-          )}
+          {overflowCount > 0 && <span className="day-events-overflow">+{overflowCount}</span>}
         </div>
       )}
     </button>

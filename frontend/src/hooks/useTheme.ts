@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import type { ThemeMode } from "../types/calendar.types";
+import { useCallback, useEffect, useState } from 'react';
+import type { ThemeMode } from '../types/calendar.types';
 
-const STORAGE_KEY = "calendar-theme";
+const STORAGE_KEY = 'calendar-theme';
 
 function isThemeMode(value: string | null): value is ThemeMode {
-  return value === "light" || value === "dark";
+  return value === 'light' || value === 'dark';
 }
 
 /**
@@ -18,8 +18,8 @@ function isThemeMode(value: string | null): value is ThemeMode {
  * of the wrong theme on mount.
  */
 function readInitialTheme(): ThemeMode {
-  const attr = document.documentElement.getAttribute("data-theme");
-  return isThemeMode(attr) ? attr : "dark";
+  const attr = document.documentElement.getAttribute('data-theme');
+  return isThemeMode(attr) ? attr : 'dark';
 }
 
 export function useTheme(): [ThemeMode, () => void] {
@@ -30,7 +30,7 @@ export function useTheme(): [ThemeMode, () => void] {
   // render. The head script only handles the *initial* paint; this effect
   // handles every subsequent toggle.
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute('data-theme', theme);
     try {
       window.localStorage.setItem(STORAGE_KEY, theme);
     } catch {
@@ -40,7 +40,7 @@ export function useTheme(): [ThemeMode, () => void] {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
   return [theme, toggleTheme];

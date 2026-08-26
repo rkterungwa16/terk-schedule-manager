@@ -1,5 +1,5 @@
-import { memo } from "react";
-import type { ThemeMode } from "../types/calendar.types";
+import { memo } from 'react';
+import type { ThemeMode } from '../types/calendar.types';
 
 interface ThemeToggleProps {
   mode: ThemeMode;
@@ -7,7 +7,7 @@ interface ThemeToggleProps {
 }
 
 function ThemeToggleComponent({ mode, onToggle }: ThemeToggleProps) {
-  const nextMode: ThemeMode = mode === "dark" ? "light" : "dark";
+  const nextMode: ThemeMode = mode === 'dark' ? 'light' : 'dark';
 
   return (
     <button
@@ -16,7 +16,7 @@ function ThemeToggleComponent({ mode, onToggle }: ThemeToggleProps) {
       onClick={onToggle}
       aria-label={`Switch to ${nextMode} theme`}
     >
-      {mode === "dark" ? "Dark" : "Light"}
+      {mode === 'dark' ? 'Dark' : 'Light'}
     </button>
   );
 }

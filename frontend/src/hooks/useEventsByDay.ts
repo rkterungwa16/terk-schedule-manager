@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import type { CalendarEvent } from "../types/calendar.types";
-import { dayKey } from "../utils/dateUtils";
-import { getOccurringEvents } from "../utils/recurrence";
+import { useMemo } from 'react';
+import type { CalendarEvent } from '../types/calendar.types';
+import { dayKey } from '../utils/dateUtils';
+import { getOccurringEvents } from '../utils/recurrence';
 
 /**
  * PERFORMANCE NOTE
@@ -24,7 +24,7 @@ import { getOccurringEvents } from "../utils/recurrence";
  */
 export function useEventsByDay(
   events: CalendarEvent[],
-  days: Date[],
+  days: Date[]
 ): Record<string, CalendarEvent[]> {
   return useMemo(() => {
     const result: Record<string, CalendarEvent[]> = {};
@@ -37,7 +37,7 @@ export function useEventsByDay(
 
 export function getEventsForDay(
   eventsByDay: Record<string, CalendarEvent[]>,
-  date: Date,
+  date: Date
 ): CalendarEvent[] {
   return eventsByDay[dayKey(date)] ?? [];
 }

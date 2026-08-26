@@ -1,13 +1,8 @@
-import type {
-  CalendarAction,
-  CalendarReducerState,
-} from "../types/calendar.types";
-import { assertUnreachable } from "../types/calendar.types";
-import { isSameDay } from "../utils/dateUtils";
+import type { CalendarAction, CalendarReducerState } from '../types/calendar.types';
+import { assertUnreachable } from '../types/calendar.types';
+import { isSameDay } from '../utils/dateUtils';
 
-export function createInitialState(
-  anchor: Date = new Date(),
-): CalendarReducerState {
+export function createInitialState(anchor: Date = new Date()): CalendarReducerState {
   return {
     current: new Date(anchor.getFullYear(), anchor.getMonth(), 1),
     selectedDate: null,
@@ -37,23 +32,22 @@ export function createInitialState(
  */
 export function calendarReducer(
   state: CalendarReducerState,
-  action: CalendarAction,
+  action: CalendarAction
 ): CalendarReducerState {
   switch (action.type) {
-    case "SELECT_DAY": {
+    case 'SELECT_DAY': {
       const { date } = action.payload;
-      const alreadySelected =
-        state.selectedDate && isSameDay(state.selectedDate, date);
+      const alreadySelected = state.selectedDate && isSameDay(state.selectedDate, date);
       return {
         ...state,
         selectedDate: alreadySelected ? null : date,
       };
     }
 
-    case "CLOSE_DETAILS":
+    case 'CLOSE_DETAILS':
       return { ...state, selectedDate: null };
 
-    case "SET_MONTH": {
+    case 'SET_MONTH': {
       // Dispatched by whichever view (Month or Schedule) reports that its
       // scroll position moved to a different month — this is how the
       // header, and the *other* view's initial scroll position the next
@@ -61,8 +55,7 @@ export function calendarReducer(
       // Clears `selectedDate` too: a day selected in whatever month was
       // previously current has no meaning once browsing has moved to a
       // different month entirely.
-      if (state.current.getTime() === action.payload.month.getTime())
-        return state;
+      if (state.current.getTime() === action.payload.month.getTime()) return state;
       return {
         ...state,
         current: action.payload.month,

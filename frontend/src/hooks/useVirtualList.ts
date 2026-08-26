@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 /**
  * The reference implementation computes each row's position analytically —
@@ -36,7 +36,7 @@ interface VisibleRange {
 
 export function useVirtualList<T extends { key: string }>(
   items: T[],
-  estimateSize: (item: T) => number,
+  estimateSize: (item: T) => number
 ) {
   const heightsRef = useRef(new Map<string, number>());
   // Bumped whenever a real measurement meaningfully corrects an estimate,
@@ -48,8 +48,7 @@ export function useVirtualList<T extends { key: string }>(
     const result = new Array<number>(items.length + 1);
     result[0] = 0;
     for (let i = 0; i < items.length; i++) {
-      const height =
-        heightsRef.current.get(items[i].key) ?? estimateSize(items[i]);
+      const height = heightsRef.current.get(items[i].key) ?? estimateSize(items[i]);
       result[i + 1] = result[i] + height;
     }
     return result;
@@ -71,13 +70,10 @@ export function useVirtualList<T extends { key: string }>(
       }
       return Math.min(low, Math.max(items.length - 1, 0));
     },
-    [offsets, items.length],
+    [offsets, items.length]
   );
 
-  const [range, setRange] = useState<VisibleRange>({
-    start: 0,
-    end: Math.min(items.length, 20),
-  });
+  const [range, setRange] = useState<VisibleRange>({ start: 0, end: Math.min(items.length, 20) });
 
   /** The direct analog of the reference's computeVisibleRows: turn a
    *  scroll position + viewport height into an item range, padded by a
@@ -93,11 +89,9 @@ export function useVirtualList<T extends { key: string }>(
       let end = findIndexForOffset(highBound) + 1;
       end = Math.min(end, items.length);
 
-      setRange((prev) =>
-        prev.start === start && prev.end === end ? prev : { start, end },
-      );
+      setRange((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
     },
-    [findIndexForOffset, items.length],
+    [findIndexForOffset, items.length]
   );
 
   // One shared ResizeObserver, items attached/detached as they scroll into
@@ -106,9 +100,7 @@ export function useVirtualList<T extends { key: string }>(
   // out directly instead of hidden behind an API.
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const elementKeysRef = useRef(new Map<Element, string>());
-  const measureItemCallbacksRef = useRef(
-    new Map<string, (el: HTMLElement | null) => void>(),
-  );
+  const measureItemCallbacksRef = useRef(new Map<string, (el: HTMLElement | null) => void>());
 
   if (!resizeObserverRef.current) {
     resizeObserverRef.current = new ResizeObserver((entries) => {
@@ -165,12 +157,5 @@ export function useVirtualList<T extends { key: string }>(
     return callback;
   }, []);
 
-  return {
-    offsets,
-    totalHeight,
-    range,
-    recomputeRange,
-    measureItem,
-    findIndexForOffset,
-  };
+  return { offsets, totalHeight, range, recomputeRange, measureItem, findIndexForOffset };
 }

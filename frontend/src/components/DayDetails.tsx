@@ -1,7 +1,7 @@
-import type { CalendarEvent } from "../types/calendar.types";
-import { useCategories } from "../context/CategoriesContext";
-import { getCategory } from "../data/categories";
-import { formatTimeLabel } from "../utils/dateUtils";
+import type { CalendarEvent } from '../types/calendar.types';
+import { useCategories } from '../context/CategoriesContext';
+import { getCategory } from '../data/categories';
+import { formatTimeLabel } from '../utils/dateUtils';
 
 interface DayDetailsProps {
   events: CalendarEvent[];
@@ -9,11 +9,7 @@ interface DayDetailsProps {
   onViewEvent: (event: CalendarEvent) => void;
 }
 
-export function DayDetails({
-  events,
-  onAddEvent,
-  onViewEvent,
-}: DayDetailsProps) {
+export function DayDetails({ events, onAddEvent, onViewEvent }: DayDetailsProps) {
   const { categories } = useCategories();
 
   return (
@@ -41,14 +37,9 @@ export function DayDetails({
           >
             <div
               className="event-category"
-              style={{
-                backgroundColor: getCategory(categories, event.categoryId)
-                  .color,
-              }}
+              style={{ backgroundColor: getCategory(categories, event.categoryId).color }}
             />
-            <span className="event-time">
-              {formatTimeLabel(event.startTime)}
-            </span>
+            <span className="event-time">{formatTimeLabel(event.startTime)}</span>
             <span>{event.eventName}</span>
           </button>
         ))}
