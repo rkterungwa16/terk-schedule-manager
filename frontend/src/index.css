@@ -744,7 +744,7 @@ body {
 }
 
 .field-row {
-  display: flex;
+  /*display: flex;*/
   gap: 12px;
 }
 
