@@ -820,6 +820,10 @@ body {
   outline-offset: 1px;
 }
 
+.add-event-form input[type="time"] {
+  width: 100%;
+}
+
 .form-error {
   color: var(--danger);
   font-family: var(--font-mono);
